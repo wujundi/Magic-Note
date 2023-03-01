@@ -16,7 +16,7 @@
 
 ## 4、前提环境搭建
 
-Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide for Ambari 2.7.7 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.7.7))，对于这些前置依赖，可以参考对饮链接([Ambari Development - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Ambari+Development))
+Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide for Ambari 2.7.7 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.7.7))，对于这些前置依赖，可以参考对应链接([Ambari Development - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Ambari+Development))
 
 当然，在文档之中其实 Ambari 也是给了大家抄作业的机会的，比如文档中提到"you can easily launch a VM that is preconfigured with all the tools that you need.  See the **Pre-Configured Development Environment** section in the [Quick Start Guide](https://cwiki.apache.org/confluence/display/AMBARI/Quick+Start+Guide)." 只不过这部分内容跳转过去是使用 VirtualBox 和命令行的，打包好的启动命令太黑盒了，我还是自己弄吧。
 
@@ -50,3 +50,25 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 
      * 直接 sudo apt install g++ 提示报错 The following packages have unmet dependencies: libc6-dev : Depends: libc6 (= 2.35-0ubuntu3) but 2.35-0ubuntu3.1 is to be installed
      * 参考 [(54条消息) Ubuntu 22.04 LTS 解决 libc6-dev 缺少依赖 E: 软件包冲突的问题_肖典泽的博客-CSDN博客](https://blog.csdn.net/xdz233/article/details/127470733) 解决依赖问题，最终成功安装
+
+## 5、下面正式开始搭建
+
+指导链接就是官网的 Installation Guide  https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.7.7
+
+   1. 第一步，下载 tar.gz 格式的安装包，不得不说，国内的下载还是用 tuna 的镜像更快更方便
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

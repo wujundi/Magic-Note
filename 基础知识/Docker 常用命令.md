@@ -1,9 +1,11 @@
 # Docker 常用命令
 
+[TOC]
+
 * 拉取镜像 docker pull wujundi/mysql-server:born
 * 查看本地镜像 docker images
 ### 按照镜像启动一个容器 
-* docker run --name=mysql  -d -p 3306:3306 wujundi/mysql-server:born
+* docker run --name=mysql  -d -p 3306:3306 wujundi/mysql-server
 
 i是交互式操作
 t是一个终端
@@ -22,11 +24,17 @@ d指的是在后台运行
 * docker ps
 * docker ps -a 查看所有容器
 
+### 启动一个容器
+* docker start container_name
+
 ### 停止一个容器
 * docker stop mysql
 
 ### 删除某个容器
 * docker rm container_id
+
+### 把所需上传的容器变为镜像
+* docker commit containerId dockerUserName/XXX
 
 ### 查看所有镜像
 * docker images

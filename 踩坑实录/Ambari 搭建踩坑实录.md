@@ -55,20 +55,23 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 
 指导链接就是官网的 Installation Guide  https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.7.7
 
-   1. 第一步，下载 tar.gz 格式的安装包，不得不说，国内的下载还是用 tuna 的镜像更快更方便
+1. 第一步，下载 tar.gz 格式的安装包，不得不说，国内的下载还是用 tuna 的镜像更快更方便
+2. 第二部开始解压与安装
+
+   ```
+   tar xfvz apache-ambari-2.7.7-src.tar.gz
+   cd apache-ambari-2.7.7-src
+   mvn versions:set -DnewVersion=2.7.7.0.0 # 这里会执行一大波自动化的安装，最终 BUILD SUCCESS
+
+   pushd ambari-metrics # 相当于高级版的 cd ambari-metrics
+   mvn versions:set -DnewVersion=2.7.7.0.0 # 这里又会执行一大波自动化的安装，，最终 BUILD SUCCESS
+   popd # 将当前目录更改为pushd命令最近存储的目录，在这个语境里，相当于 cd .. 了
+
+   mvn -B clean install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver="python >= 2.6" # 这句超出我的理解范畴了
 
 
+   ```
 
+在打包过程中遇到了困难，卡在了Ambari Web 2.7.7.0.0，报错信息是：
 
-
-
-
-
-
-
-
-
-
-
-
-
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.4:install-node-and-yarn (install node and yarn) on project ambari-web: Could not extract the Node archive: Could not extract archive: '/home/wujundi/.m2/repository/com/github/eirslett/node/4.5.0/node-4.5.0-linux-x64.tar.gz': EOFException -> [Help 1]

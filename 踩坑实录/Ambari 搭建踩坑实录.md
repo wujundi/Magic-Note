@@ -74,3 +74,11 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 
 * 打包过程中遇到了困难，卡在了Ambari Web 2.7.7.0.0，报错信息是：[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.4:install-node-and-yarn (install node and yarn) on project ambari-web: Could not extract the Node archive: Could not extract archive: '/home/wujundi/.m2/repository/com/github/eirslett/node/4.5.0/node-4.5.0-linux-x64.tar.gz': EOFException -> [Help 1]
 * 上网搜索了了之后，发现 Could not extract the Node archive: Could not extract archive 是一个比较普遍的报错，一般是由于 maven 库下载过程中的网络问题导致本地 maven 仓库对应的文件不全。解决办法一般就是删除掉报错对应的本地 maven 库文件，重新打包重新下载即可。
+* 还是报错卡住，所以这里我转向Ambari的开发文档 [Ambari Development - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Ambari+Development) ，尝试寻找有关安装的更多信息
+* 结果在 Running Unit Tests 阶段就卡住了，提示没有npm，所以这里先把 npm 安装上，
+
+
+
+## 6、我想在本地搭建环境可能是在做无用功，所以上面的步骤会挪到docker里面搞，顺便可以把docker学一学（尤其这玩意现在越来越多的被用到非专业的娱乐领域了，可能以后用得上）
+
+* 所以新的思路就出来，用其中一个Ubuntu机器作为主力机安装docker，然后通过docker来搭建伪集群。为啥不直接用windows wsl？我怕搞的时候把环境搞崩，在VMware里面回滚起来没有风险。

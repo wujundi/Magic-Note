@@ -81,4 +81,6 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 
 * 所以新的思路就出来，用其中一个Ubuntu机器作为主力机安装docker，然后通过docker来搭建伪集群。为啥不直接用windows wsl？我怕搞的时候把环境搞崩，在VMware里面回滚起来没有风险。
 * docker 安装成功，在ubuntu容器的基础上，拷贝进去了ambari的源码进行打包安装，之前 ambari-web部分的报错也通过安装npm解决掉了。
-* 接下来，在打包 anbari-view 的时候遇到的问题，报错是 package javax.ws.rs.core does not exist，暂时还没有弄好
+* 期间遇到了一个问题，打包的时候报错 Too many files with unapproved license，通过在maven打包命令中增加 -Drat.skip=true 参数解决了
+* 接下来，在打包 anbari-view 的时候遇到的问题，报错是 package javax.ws.rs.core does not exist，暂时还没有弄好，更新了编译环境的 java 版本，从jdk11降级到jdk8，仍然有这个问题，那么我就怀疑是又是下载依赖包的时候没有下载全导致的，所以删除了所有本地仓库文件，全部重新从阿里云拉取，这次就把这个问题解决了
+* 打包Storm的时候遇到问题，[INFO] Ambari Metrics Storm Sink (Legacy) 2.7.7.0.0 ....... FAILURE [ 13.035 s]，具体的报错是，[ERROR] Failed to execute goal on project ambari-metrics-storm-sink-legacy: Could not resolve dependencies for project org.apache.ambari:ambari-metrics-storm-sink-legacy:jar:2.7.7.0.0: Failed to collect dependencies at org.apache.storm:storm-core:jar:0.9.3.2.2.1.0-2340: Failed to read artifact descriptor for org.apache.storm:storm-core:jar:0.9.3.2.2.1.0-2340: Could not transfer artifact org.apache.storm:storm-core:pom:0.9.3.2.2.1.0-2340 from/to default-repository (http://repo.maven.apache.org/maven2): Transfer failed for http://repo.maven.apache.org/maven2/org/apache/storm/storm-core/0.9.3.2.2.1.0-2340/storm-core-0.9.3.2.2.1.0-2340.pom 501 HTTPS Required -> [Help 1]

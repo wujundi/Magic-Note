@@ -77,8 +77,8 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 * 还是报错卡住，所以这里我转向Ambari的开发文档 [Ambari Development - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Ambari+Development) ，尝试寻找有关安装的更多信息
 * 结果在 Running Unit Tests 阶段就卡住了，提示没有npm，所以这里先把 npm 安装上，
 
-
-
 ## 6、我想在本地搭建环境可能是在做无用功，所以上面的步骤会挪到docker里面搞，顺便可以把docker学一学（尤其这玩意现在越来越多的被用到非专业的娱乐领域了，可能以后用得上）
 
 * 所以新的思路就出来，用其中一个Ubuntu机器作为主力机安装docker，然后通过docker来搭建伪集群。为啥不直接用windows wsl？我怕搞的时候把环境搞崩，在VMware里面回滚起来没有风险。
+* docker 安装成功，在ubuntu容器的基础上，拷贝进去了ambari的源码进行打包安装，之前 ambari-web部分的报错也通过安装npm解决掉了。
+* 接下来，在打包 anbari-view 的时候遇到的问题，报错是 package javax.ws.rs.core does not exist，暂时还没有弄好

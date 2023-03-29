@@ -90,3 +90,5 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
   |          ^~~~~~~~~~
   compilation terminated.
   error: command 'x86_64-linux-gnu-gcc' failed with exit status 1，看起来好像是 x86_64-linux-gnu-gcc 命令没能成功的执行 .c 文件，网上一搜，原来这是个普遍的问题，是没有安装python开发环境导致的，[(64条消息) xxx: fatal error: Python.h: No such file or directory 完美解决方案_TimeDoor的博客-CSDN博客](https://blog.csdn.net/caokun_8341/article/details/103275606)，所以就按照指令安装了环境
+* 编译 ambari-server 模块的时候遇到了一个报错 /usr/bin/env: 'python': No such file or directory [ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.2.1:exec (azuredb-gen) on project ambari-server: Command execution failed. Process exited with an error: 127 (Exit value: 127) -> [Help 1]
+  org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.2.1:exec (azuredb-gen) on project ambari-server: Command execution failed. 上网一查是一个通用的问题 [(66条消息) 解决：/usr/bin/env: ‘python’: No such file or directory_asjodnobfy的博客-CSDN博客](https://blog.csdn.net/qq_41550190/article/details/119804102)，然后就按照这个方式解决了，其实就是编译的时候，程序没有在 /usr/bin/ 目录下面找到名为 python 的符号链接

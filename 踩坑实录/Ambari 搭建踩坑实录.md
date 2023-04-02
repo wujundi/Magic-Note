@@ -96,13 +96,19 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
   ambari-server : Depends: python (>= 2.6) but it is not installable
   E: Unable to correct problems, you have held broken packages. 可是ubuntu自带的包根本就没有这个 python，只要输入 apt-get install python 就是提示 Package python is not available, but is referred to by another package. 试了很多方法，最终考虑到会不会是apt源的问题，在 [ubuntu更换apt源、pip源和conda源 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/366458982) 的指导之下，新加入了aliyun的apt源，然后，apt-get install python 就正常安装了，再然后，安装 ambari-server 的 deb 就命令就可以正常运行了
 * 在 ambari-server start 阶段遇到了问题，一直启动不成功，查看 /var/log/ambari-server/ambari-server.out 日志，发现报错了，具体报错是 Caused by: java.io.IOException: ObjectIdentifier() -- data isn't an object ID (tag = 48)，上网查了一下 [(66条消息) Java Azure开发parseAlgParameters failed: ObjectIdentifier() -- data isn‘t an object ID (tag = 48)处理_风行無痕的博客-CSDN博客](https://blog.csdn.net/gmaaa123/article/details/125929375) 可能是 java版本的问题，没想都我选它提示默认的java包，它居然给我报错，真是服了，哈哈，这回重新运行了 ambari-server setup，在 jdk 的环节选了自定义的 jdk，然后参考 [Ubuntu 安装java8 并配置JAVA_HOME – 源码巴士 (code84.com)](https://code84.com/813098.html) 里面寻找 java_home 路径的方式，在 ambari-server setup 运行的过程中，填写了 java_home，运行之后 ps -aux 看到这回有对应的 pid 启动了
-* 登录到页面之后，发现检索不出版本的信息，上传 xml 的时候，报了一个异常 java.lang.IllegalArgumentException: Provided XML does not have a Schema defined using 'noNamespaceSchemaLocation'，上网查了一下基本定位到是 java 版本的问题，先试一下重新打包重新安装
+* 登录到页面之后，发现检索不出版本的信息，上网查到了这么个解释 https://blog.csdn.net/CREATE_17/article/details/128027911，官方文档里面找到了这样的说明 [Overview - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=38571133)，嗯，那就看看这些 `metainfo.xml` 吧。不看不知道，原来是所有的 `metainfo.xml 里面都是 <active>false</active>，我尝试把其中的一个改成 true，然后 ambari-server restart 了一下，结果页面上就有变化了，我以为问题已经得到解决了，但是。。。安装的时候HDP的 base url 全部都无法访问了，也就是说，把 HDP 版本放出来也没用。然后我放出了代码里面自带的 BIGTOP stack ,结果只有 redhat6的适配，而且url还访问不通，逼得我只能去 pull ambari 最新的源码，最新代码里面目前正在整合 bigtop 3.2.0 的 stack，同样的修改方式，这次页面上并没有出现 bigtop 3.2.0`
+* 到这里为止，对于 anbari 2.7.7 的探索基本接近尾声了，2.7.7虽然能够成功编译与安装，但是最关键的 stack 还没有完成向 bigtop 的转变，而 HDP 对于历史版本的"断供"，让 ambari2.7.7 成为了一座空城。
+
+
+# 7、等待 ambari 2.8.0
+
+* ambari 的 git 项目已经在 3月底打上了 2.8.0 的 tag，pull 代码之后发现，stacks 已经换成了 bigtop 3.2.0，等一等官方发布 2.8.0 版本的安装文档吧
 
 
 
 
 /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
-
-
 mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver='python >= 2.6'  -Drat.skip=true -e
+
+docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/ubuntu-ambari-1

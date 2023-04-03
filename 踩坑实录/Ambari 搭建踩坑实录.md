@@ -99,10 +99,16 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 * 登录到页面之后，发现检索不出版本的信息，上网查到了这么个解释 https://blog.csdn.net/CREATE_17/article/details/128027911，官方文档里面找到了这样的说明 [Overview - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=38571133)，嗯，那就看看这些 `metainfo.xml` 吧。不看不知道，原来是所有的 `metainfo.xml 里面都是 <active>false</active>，我尝试把其中的一个改成 true，然后 ambari-server restart 了一下，结果页面上就有变化了，我以为问题已经得到解决了，但是。。。安装的时候HDP的 base url 全部都无法访问了，也就是说，把 HDP 版本放出来也没用。然后我放出了代码里面自带的 BIGTOP stack ,结果只有 redhat6的适配，而且url还访问不通，逼得我只能去 pull ambari 最新的源码，最新代码里面目前正在整合 bigtop 3.2.0 的 stack，同样的修改方式，这次页面上并没有出现 bigtop 3.2.0`
 * 到这里为止，对于 anbari 2.7.7 的探索基本接近尾声了，2.7.7虽然能够成功编译与安装，但是最关键的 stack 还没有完成向 bigtop 的转变，而 HDP 对于历史版本的"断供"，让 ambari2.7.7 成为了一座空城。
 
-
-# 7、等待 ambari 2.8.0
+# 7、重试 ambari 2.8.0
 
 * ambari 的 git 项目已经在 3月底打上了 2.8.0 的 tag，pull 代码之后发现，stacks 已经换成了 bigtop 3.2.0，等一等官方发布 2.8.0 版本的安装文档吧
+* 说曹操曹操到，官方wiki在20230331放出了[Installation Guide for Ambari 2.8.0 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.8.0) 2.8 的安装导引，线上的代码包还没有，所以我从 github 上下载了 tag 是 2.8.0 release 的源码压缩包
+* 文档中说目前只支持 centos7 的环境，所以我就拉了 centos 的镜像，重头再来
+
+
+
+
+
 
 
 

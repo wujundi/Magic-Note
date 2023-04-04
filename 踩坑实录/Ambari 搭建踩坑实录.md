@@ -142,7 +142,9 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
         `</exclusion>`
       `</exclusions>`
     `</dependency>`
-又搜了一下官方的 maven 坐标 https://mvnrepository.com/artifact/org.apache.ambari/ambari-serviceadvisor，看起来这不像是要用线上坐标的样子，所以我转而先编译 ambari-serviceadvisor 模块，看看是不是 ambari-server 是想以来这个本地项目的编译结果
+又搜了一下官方的 maven 坐标 https://mvnrepository.com/artifact/org.apache.ambari/ambari-serviceadvisor，看起来这不像是要用线上坐标的样子，所以我转而先编译 ambari-serviceadvisor 模块，看看是不是 ambari-server 是想以来这个本地项目的编译结果。
+
+我尝试了配置上官方的 mvn 坐标还是没用，那么索性就手动的下 build ambari-serviceadvisor 模块，得到 2.8.0.0.0 的 ambari-serviceadvisor，然后把 ambari-server 的pom里面依赖 ambari-serviceadvisor 的版本直接替换成 2.8.0.0.0，结果就可以了。而且我还发现一个神奇的事情，当我把 ambari-server 的pom里面依赖 ambari-serviceadvisor 的版本直接替换成 2.8.0.0.0 之后，整个项目的编译顺序会随之调整，ambari-serviceadvisor 调整到 ambari-server 之前编译了，神奇。这样调整完就不需要单独手动 build ambari-serviceadvisor 了，直接在项目下 build 项目就可以了。
 
 
 

@@ -104,6 +104,45 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 * ambari 的 git 项目已经在 3月底打上了 2.8.0 的 tag，pull 代码之后发现，stacks 已经换成了 bigtop 3.2.0，等一等官方发布 2.8.0 版本的安装文档吧
 * 说曹操曹操到，官方wiki在20230331放出了[Installation Guide for Ambari 2.8.0 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.8.0) 2.8 的安装导引，线上的代码包还没有，所以我从 github 上下载了 tag 是 2.8.0 release 的源码压缩包
 * 文档中说目前只支持 centos7 的环境，所以我就拉了 centos 的镜像，重头再来
+* [INFO] Ambari Admin View .................................. FAILURE [ 10.168 s] [ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.2.1:exec (Bower install) on project ambari-admin: Command execution failed.: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+  org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.2.1:exec (Bower install) on project ambari-admin: Command execution failed. 看起来像是 Bower install，更新了 yum 配置之后，安装了 npm 和 bower ,然后在执行到 bower 安装的时候也经常会报错，都是科学上网的问题导致 bower 安装一些包的时候拉不下来代码，安装好了也就没事了
+* 
+
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for Ambari Main 2.8.0.0.0:
+[INFO]
+[INFO] Ambari Main ........................................ SUCCESS [  4.524 s]
+[INFO] Apache Ambari Project POM .......................... SUCCESS [  0.290 s]
+[INFO] Ambari Web ......................................... SUCCESS [01:43 min]
+[INFO] Ambari Views ....................................... SUCCESS [  1.757 s]
+[INFO] Ambari Admin View .................................. SUCCESS [ 13.978 s]
+[INFO] ambari-utility ..................................... SUCCESS [06:41 min]
+[INFO] Ambari Server SPI .................................. SUCCESS [ 22.502 s]
+[INFO] Ambari Server ...................................... FAILURE [05:29 min]
+[INFO] Ambari Functional Tests ............................ SKIPPED
+[INFO] Ambari Agent ....................................... SKIPPED
+[INFO] Ambari Service Advisor ............................. SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  14:38 min
+[INFO] Finished at: 2023-04-04T06:14:36Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal on project ambari-server: Could not resolve dependencies for project org.apache.ambari:ambari-server:jar:2.8.0.0.0: Failed to collect dependencies at org.apache.ambari:ambari-serviceadvisor:jar:1.0.0.0-SNAPSHOT: Failed to read artifact descriptor for org.apache.ambari:ambari-serviceadvisor:jar:1.0.0.0-SNAPSHOT: Could not transfer artifact org.apache.ambari:ambari-serviceadvisor:pom:1.0.0.0-SNAPSHOT from/to maven-default-http-blocker (http://0.0.0.0/): Blocked mirror for repositories: [aliyun-repository (http://maven.aliyun.com/nexus/content/groups/public/, default, releases+snapshots)] -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal on project ambari-server: Could not resolve dependencies for project org.apache.ambari:ambari-server:jar:2.8.0.0.0: Failed to collect dependencies at org.apache.ambari:ambari-serviceadvisor:jar:1.0.0.0-SNAPSHOT
+
+在源代码里面搜了一下，发现ambari-server pom 里面对于 ambari-serviceadvisor 的坐标写的是     `<dependency>`
+      `<groupId>`org.apache.ambari `</groupId>`
+      `<artifactId>`ambari-serviceadvisor `</artifactId>`
+      `<version>`1.0.0.0-SNAPSHOT `</version>`
+      `<exclusions>`
+        `<exclusion>`
+          `<groupId>`commons-httpclient `</groupId>`
+          `<artifactId>`commons-httpclient `</artifactId>`
+        `</exclusion>`
+      `</exclusions>`
+    `</dependency>`
+又搜了一下官方的 maven 坐标 https://mvnrepository.com/artifact/org.apache.ambari/ambari-serviceadvisor，看起来这不像是要用线上坐标的样子，所以我转而先编译 ambari-serviceadvisor 模块，看看是不是 ambari-server 是想以来这个本地项目的编译结果
 
 
 
@@ -112,9 +151,11 @@ Ambari 官网的 Start 中提到需要一些 "prerequisites"([Installation Guide
 
 
 
+
+
+
+docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/ubuntu-ambari-1
 
 /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver='python >= 2.6'  -Drat.skip=true -e
-
-docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/ubuntu-ambari-1

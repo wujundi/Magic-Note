@@ -157,6 +157,30 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
   ERROR: Exiting with exit code 1.
   REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决
 
+## bigtop的安装
+
+#### allclean
+
+* 按照 ambari 安装指导里面的命令来安装，会报错，Task 'bigtop-select-pkg' not found in root project 'bigtop'. 用 gradlew tasks 命令看了一下，好像确实是没有 bigtop-select-pkg，那就在执行命令中拿掉试试。
+* 这个过程全部都要从 https://archive.apache.org 来下载源码包，那个网速一言难尽，这里遇到一个坑，用 aliyun 的 maven repo 会引起报错，我移除了之前配置的 setting.xml 文件之后，才顺利的编译下去
+
+#### toolchain
+
+* 然后到了安装 bigtop 的环节，在安装依赖的 ./gradlew toolchain 环节报错 sudo: puppet: command not found，随之就在 [apache/bigtop: Mirror of Apache Bigtop (github.com)](https://github.com/apache/bigtop#for-developers-building-the-entire-distribution-from-scratch) 的指导下进行 Puppet 的安装，按照指导执行 bigtop_toolchain/bin/puppetize.sh 的时候一直不成功，所以进到这个脚本里面看了一下，原来是卡在了 gem 命令，需要安装 gem，而 gem 自带的源拉不下来代码，所以就需要先配置 gem 的国内源，详见 [(66条消息) gem 添加国内源_gem源_AdleyTales的博客-CSDN博客](https://blog.csdn.net/adley_app/article/details/111733908)，安装好之后，./gradlew toolchain 就可以运行了。
+* 可以运行是可以运行，但是也比较麻烦，显示 gradle 源码包拉不下来，导致报错，我另外下载放到了对应的目录里面
+* 然后是要修改我的 maven 安装文件，然后会报错 Notice: /Stage[main]/Bigtop_toolchain::Maven/File[/usr/local/maven]: Not removing directory; use 'force' to override
+  Notice: /Stage[main]/Bigtop_toolchain::Maven/File[/usr/local/maven]: Not removing directory; use 'force' to override
+  Error: Could not remove existing file
+  Error: /Stage[main]/Bigtop_toolchain::Maven/File[/usr/local/maven]/ensure: change from directory to link failed: Could not remove existing file
+* 所以我在想，toolchain 的目标场景应该是一个什么都没有的“裸机器”，对于已经搭建了一些东西的场景，是不是不太合适。
+
+#### **Recommended build environments** docker
+
+* 在 bigtop 的项目 readme 中提到，[apache/bigtop: Mirror of Apache Bigtop (github.com)](https://github.com/apache/bigtop#for-developers-building-the-entire-distribution-from-scratch)“Bigtop provides "development in the can" environments, using Docker containers. These have the build tools set by the toolchain, as well as the user and build environment configured and cached. All currently supported OSes could be pulled from official Bigtop repository at [https://hub.docker.com/r/bigtop/slaves/tags/](https://hub.docker.com/r/bigtop/slaves/tags/)”这听起来是官方的环境包，这个链接备用吧，暂时感觉这里提供的镜像可能都是大数据搭建的理想培养基，可以省去基础组件的安装过程，我准备拉这个环境来进行 bigtop 部分的编译
+* 在这里运行，同样遇到了 Task 'bigtop-select-pkg' not found in root project 'bigtop' 的问题，我尝试在代码中找到 bigtop-select 的蛛丝马迹，最终发现在 bigtop-3.2.0/bigtop.bom 文件里面被注释掉了一段，放开之后再次运行 ing
+
+
+
 
 
 docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/ubuntu-ambari-1
@@ -166,8 +190,6 @@ docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:844
 /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.362.b08-1.el7_9.x86_64
 
 mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver='python >= 2.6'  -Drat.skip=true -e
-
-
 
 docker run -itd --name='centos-ambari-neo' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
 

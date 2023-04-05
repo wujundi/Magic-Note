@@ -146,13 +146,16 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
 
 我尝试了配置上官方的 mvn 坐标还是没用，那么索性就手动的下 build ambari-serviceadvisor 模块，得到 2.8.0.0.0 的 ambari-serviceadvisor，然后把 ambari-server 的pom里面依赖 ambari-serviceadvisor 的版本直接替换成 2.8.0.0.0，结果就可以了。而且我还发现一个神奇的事情，当我把 ambari-server 的pom里面依赖 ambari-serviceadvisor 的版本直接替换成 2.8.0.0.0 之后，整个项目的编译顺序会随之调整，ambari-serviceadvisor 调整到 ambari-server 之前编译了，神奇。这样调整完就不需要单独手动 build ambari-serviceadvisor 了，直接在项目下 build 项目就可以了。
 
-
-
-
-
-
-
-
+* ambari-server setup 的时候报了错误 /usr/sbin/ambari-server: line 34: buildNumber: unbound variable , 上网搜了一下，发现这位大佬是在安装之后去修改配置文件的，[Ambari2.7.6安装 - shine-rainbow - 博客园 (cnblogs.com)](https://www.cnblogs.com/shine-rainbow/p/16169205.html) ，那么间接说明这个 buildNumber 应该不是什么关键密钥，应该只是一个变量，所以我重新编译，并且在编译的时候就给这个变量赋值，mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e，这样重新编译之后就好了、
+* setup 的过程中遇到问题 Enter advanced database configuration [y/n] (n)? n
+  Configuring database...
+  Default properties detected. Using built-in database.
+  Configuring ambari database...
+  Checking PostgreSQL...
+  Running initdb: This may take up to a minute.
+  About to start PostgreSQL
+  ERROR: Exiting with exit code 1.
+  REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决
 
 
 
@@ -160,4 +163,12 @@ docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:844
 
 /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.362.b08-1.el7_9.x86_64
+
 mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver='python >= 2.6'  -Drat.skip=true -e
+
+
+
+docker run -itd --name='centos-ambari-neo' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
+
+mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e

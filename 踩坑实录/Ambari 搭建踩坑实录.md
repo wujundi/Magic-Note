@@ -155,7 +155,7 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
   Running initdb: This may take up to a minute.
   About to start PostgreSQL
   ERROR: Exiting with exit code 1.
-  REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决
+  REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决 docekr
 
 ## bigtop的安装
 
@@ -163,6 +163,23 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
 
 * 按照 ambari 安装指导里面的命令来安装，会报错，Task 'bigtop-select-pkg' not found in root project 'bigtop'. 用 gradlew tasks 命令看了一下，好像确实是没有 bigtop-select-pkg，那就在执行命令中拿掉试试。
 * 这个过程全部都要从 https://archive.apache.org 来下载源码包，那个网速一言难尽，这里遇到一个坑，用 aliyun 的 maven repo 会引起报错，我移除了之前配置的 setting.xml 文件之后，才顺利的编译下去
+* 在编译 flink 的过程中报错 SEVERE: Step 'google-java-format' found problem in 'src/main/java/org/apache/flink...，参考 [flink-playgrounds官方案例使用注意事项 - maybe兔 - 博客园 (cnblogs.com)](https://www.cnblogs.com/silentgo/p/15603094.html) ,
+
+```
+<!--
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+-->
+```
+
+把 dl 文件夹下面的 flink tar.gz 文件解压，注释掉其 pom 中的部分内容之后，重新打包，然后重新运行，这个解法更多的意义在于解放了思想，apache顶级项目的源码也没有你想的那么严丝合缝，如有必要就解压改代码，然后重新压缩。这里注意 gradle 每次执行都会从 dl 文件夹里里面取压缩文件重新解压，所以直接改解压后的文件是没用的，必须把改动做到 dl 文件夹的压缩包里面
 
 #### toolchain
 
@@ -176,10 +193,12 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
 
 #### **Recommended build environments** docker
 
-* 在 bigtop 的项目 readme 中提到，[apache/bigtop: Mirror of Apache Bigtop (github.com)](https://github.com/apache/bigtop#for-developers-building-the-entire-distribution-from-scratch)“Bigtop provides "development in the can" environments, using Docker containers. These have the build tools set by the toolchain, as well as the user and build environment configured and cached. All currently supported OSes could be pulled from official Bigtop repository at [https://hub.docker.com/r/bigtop/slaves/tags/](https://hub.docker.com/r/bigtop/slaves/tags/)”这听起来是官方的环境包，这个链接备用吧，暂时感觉这里提供的镜像可能都是大数据搭建的理想培养基，可以省去基础组件的安装过程，我准备拉这个环境来进行 bigtop 部分的编译
-* 在这里运行，同样遇到了 Task 'bigtop-select-pkg' not found in root project 'bigtop' 的问题，我尝试在代码中找到 bigtop-select 的蛛丝马迹，最终发现在 bigtop-3.2.0/bigtop.bom 文件里面被注释掉了一段，放开之后再次运行 ing
-
-
+* 在 bigtop 的项目 readme 中提到，[apache/bigtop: Mirror of Apache Bigtop (github.com)](https://github.com/apache/bigtop#for-developers-building-the-entire-distribution-from-scratch)“Bigtop provides "development in the can" environments, using Docker containers. These have the build tools set by the toolchain, as well as the user and build environment configured and cached. All currently supported OSes could be pulled from official Bigtop repository at [https://hub.docker.com/r/bigtop/slaves/tags/](https://hub.docker.com/r/bigtop/slaves/tags/)”这听起来是官方的环境包，这个链接备用吧，暂时感觉这里提供的镜像可能都是大数据搭建的理想培养基，可以省去基础组件的安装过程，我准备拉这个环境来进行 bigtop 部分的编译。官方文档中的启动命令 dockers docker run --rm -u jenkins:jenkins -v `pwd`:/ws --workdir /ws bigtop/slaves:trunk-ubuntu-20.04 bash -l -c './gradlew allclean ; ./gradlew bigtop-groovy-pkg
+* 参考 [(67条消息) BigTop3.2.0 大数据组件编译--组件编译_泽芯的博客-CSDN博客](https://blog.csdn.net/m0_48319997/article/details/128101667) 进行编译，相比于 ambari 官方的安装命令，这篇 csdn 文章中的命令能使用国内的源来下载，速度快了非常多，试错成本更低。命令基本就是  ./gradlew xxxx-rpm -PparentDir=/usr/bigtop，例如 ./gradlew hadoop-rpm -PparentDir=/usr/bigtop
+* 编译 phoenix 的时候遇到了一个报错 [INFO] Phoenix Client ..................................... FAILURE [02:31 min] [ERROR] Failed to execute goal org.apache.maven.plugins:maven-shade-plugin:3.2.4:shade (default-shaded) on project phoenix-client-hbase-2.4: Error creating shaded jar: error in opening zip file /root/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava-sources.jar -> [Help 1]，在这个报错之前日志里面报出了几个 warning ``[WARNING] Could not get sources for com.google.code.findbugs:jsr305:jar:2.0.1:compile [WARNING] Could not get sources for org.apache.hadoop.thirdparty:hadoop-shaded-protobuf_3_7:jar:1.1.1:compile[WARNING] Could not get sources for org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:compile``，看起来是没下载到东西，开启科学上网试试，还是一样，那么我就自己下载jar包试试，下载 jar 包的时候发现，maven 官方仓库都是有的，只是仓库地址是 https://repo1.maven.org/maven2，这个地址我之前没有配置到 setting 文件里面。然而配置上之后也没有锤子用。从 [(67条消息) guava listenablefuture版本号9999.0-empty-to-avoid-conflict-with-guava的原因_花落的速度的博客-CSDN博客](https://blog.csdn.net/q2878948/article/details/110038191) 里面了解到这个9999包是个空包，那么解题思路是不是让 shade 不要对他做解压就好了？通过 [Tomcat Caused by: java.util.zip.ZipException: error in opening zip file - Stack Overflow](https://stackoverflow.com/questions/54918087/tomcat-caused-by-java-util-zip-zipexception-error-in-opening-zip-file) 的方法，也证实了 listenablefuture-9999.0-empty-to-avoid-conflict-with-guava-sources.jar 确实会被识别成 broken，那么接下来就是如何排掉它了。后来我发现这个 source.jar 在官方仓库里面是没有的，只有阿里云有，那么，索性我就在编译之前把 setting 文件里面的 国内源注释掉，不去下载这个 source jar 自然也就不存在解压这个 source jar 的报错了。这个问题就这样解决了。
+* 编译 kafka 的时候报了 Downloading https://services.gradle.org/distributions/gradle-6.8.1-all.zip Exception in thread "main" javax.net.ssl.SSLException: Read timed out 的错误。参考 [gradle plugins/repos/wrapper/tools 国内快速同步下载镜像 - 码农教程 (manongjc.com)](http://www.manongjc.com/detail/23-fsjnqxsbdjddfdt.html) 在 kafka 源码的 gradle/wrapper/gradle-wrapper.properties当中更改了distributionUrl的参数，换成国内源之后，文件下载没什么障碍，项目编译成功。回到 bigtop 的编译，注意重新打包kafka之后，还需要删掉 build 文件夹当中已经解压的kafka源码文件夹，否则就不会从 dl 文件夹 cp tar 包来运行了
+* 编译 flink 的时候，在 Runtime web 模块遇到了一个报错 [ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.11.0:npm (npm run ci-check) on project flink-runtime-web: Failed to run task: 'npm run ci-check' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 126 (Exit value: 126) -> [Help 1]
+  org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.11.0:npm (npm run ci-check) on project flink-runtime-web: Failed to run task。对于这个模块 [(67条消息) BigTop3.2.0 大数据组件编译--组件编译_泽芯的博客-CSDN博客](https://blog.csdn.net/m0_48319997/article/details/128101667?spm=1001.2014.3001.5502) 里面正好提到了对于 npm 版本的改动，估计就是这个问题，于是我就按照这里面写的做了改动。修改 flink-1.15.0/flink-runtime-web/pom.xm，在275行 nodeVersion改为v12.22.1，在276行 npmVersion改为6.14.12，果然就成功了，接下来就和上面一样，重新打包，然后用 bigtop 的 gradle 重新编译。
 
 
 

@@ -199,6 +199,118 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
 * 编译 kafka 的时候报了 Downloading https://services.gradle.org/distributions/gradle-6.8.1-all.zip Exception in thread "main" javax.net.ssl.SSLException: Read timed out 的错误。参考 [gradle plugins/repos/wrapper/tools 国内快速同步下载镜像 - 码农教程 (manongjc.com)](http://www.manongjc.com/detail/23-fsjnqxsbdjddfdt.html) 在 kafka 源码的 gradle/wrapper/gradle-wrapper.properties当中更改了distributionUrl的参数，换成国内源之后，文件下载没什么障碍，项目编译成功。回到 bigtop 的编译，注意重新打包kafka之后，还需要删掉 build 文件夹当中已经解压的kafka源码文件夹，否则就不会从 dl 文件夹 cp tar 包来运行了
 * 编译 flink 的时候，在 Runtime web 模块遇到了一个报错 [ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.11.0:npm (npm run ci-check) on project flink-runtime-web: Failed to run task: 'npm run ci-check' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 126 (Exit value: 126) -> [Help 1]
   org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.11.0:npm (npm run ci-check) on project flink-runtime-web: Failed to run task。对于这个模块 [(67条消息) BigTop3.2.0 大数据组件编译--组件编译_泽芯的博客-CSDN博客](https://blog.csdn.net/m0_48319997/article/details/128101667?spm=1001.2014.3001.5502) 里面正好提到了对于 npm 版本的改动，估计就是这个问题，于是我就按照这里面写的做了改动。修改 flink-1.15.0/flink-runtime-web/pom.xm，在275行 nodeVersion改为v12.22.1，在276行 npmVersion改为6.14.12，果然就成功了，接下来就和上面一样，重新打包，然后用 bigtop 的 gradle 重新编译。
+* 编译 tez 的时候遇到了问题 [ERROR] bower ESUDO         Cannot be run with sudo
+  [ERROR]
+  [ERROR] Additional error details:
+  [ERROR] Since bower is a user command, there is no need to execute it with superuser permissions.
+  [ERROR] If you're having permission errors when using bower without sudo, please spend a few minutes learning more about how your system should work and make any necessary repairs.
+  [ERROR]
+  [ERROR] http://www.joyent.com/blog/installing-node-and-npm
+  [ERROR] https://gist.github.com/isaacs/579814
+  [ERROR]
+  [ERROR] You can however run a command with sudo using "--allow-root" option
+  [INFO] ------------------------------------------------------------------------
+  [INFO] Reactor Summary for tez 0.10.1:
+  [INFO]
+  [INFO] tez ................................................ SUCCESS [ 59.782 s]
+  [INFO] hadoop-shim ........................................ SUCCESS [ 23.265 s]
+  [INFO] tez-api ............................................ SUCCESS [ 11.686 s]
+  [INFO] tez-build-tools .................................... SUCCESS [  0.174 s]
+  [INFO] tez-common ......................................... SUCCESS [  3.358 s]
+  [INFO] tez-runtime-internals .............................. SUCCESS [  2.994 s]
+  [INFO] tez-runtime-library ................................ SUCCESS [  7.611 s]
+  [INFO] tez-mapreduce ...................................... SUCCESS [  2.925 s]
+  [INFO] tez-examples ....................................... SUCCESS [  2.023 s]
+  [INFO] tez-dag ............................................ SUCCESS [  9.096 s]
+  [INFO] tez-tests .......................................... SUCCESS [  3.791 s]
+  [INFO] tez-ext-service-tests .............................. SUCCESS [  2.686 s]
+  [INFO] tez-ui ............................................. FAILURE [01:53 min]
+  [INFO] tez-plugins ........................................ SKIPPED
+  [INFO] tez-protobuf-history-plugin ........................ SKIPPED
+  [INFO] tez-yarn-timeline-history .......................... SKIPPED
+  [INFO] tez-yarn-timeline-history-with-acls ................ SKIPPED
+  [INFO] tez-yarn-timeline-cache-plugin ..................... SKIPPED
+  [INFO] tez-yarn-timeline-history-with-fs .................. SKIPPED
+  [INFO] tez-history-parser ................................. SKIPPED
+  [INFO] tez-aux-services ................................... SKIPPED
+  [INFO] tez-tools .......................................... SKIPPED
+  [INFO] tez-perf-analyzer .................................. SKIPPED
+  [INFO] tez-job-analyzer ................................... SKIPPED
+  [INFO] tez-javadoc-tools .................................. SKIPPED
+  [INFO] hadoop-shim-impls .................................. SKIPPED
+  [INFO] hadoop-shim-2.8 .................................... SKIPPED
+  [INFO] tez-dist ........................................... SKIPPED
+  [INFO] Tez ................................................ SKIPPED
+  [INFO] ------------------------------------------------------------------------
+  [INFO] BUILD FAILURE
+  [INFO] ------------------------------------------------------------------------
+  [INFO] Total time:  04:03 min
+  [INFO] Finished at: 2023-04-10T03:22:59Z
+  [INFO] ------------------------------------------------------------------------
+  [ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.4:bower (bower install) on project tez-ui: Failed to run task: 'bower install --allow-root=false' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+  [ERROR]
+  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+  [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+  [ERROR]
+  [ERROR] For more information about the errors and possible solutions, please read the following articles:
+  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+  [ERROR]
+  [ERROR] After correcting the problems, you can resume the build with the command
+  [ERROR]   mvn `<args>` -rf :tez-ui 按照之前那篇文章中的指导，把 apache-tez-0.10.1-src/tez-ui/pom.xml 第37行 allow-root-build改为--allow-root=true
+* 接下来，还是 tez-ui 模块，下一个问题 [ERROR] bower file-saver.js#1.20150507.2            retry Download of https://github.com/Teleborder/FileSaver.js/archive/b7cf622909258086bc63ad764d08fcaed780ab42.tar.gz failed with EHTTP, trying with git..
+  [INFO] bower file-saver.js#1.20150507.2         checkout b7cf622909258086bc63ad764d08fcaed780ab42
+  [ERROR] bower file-saver.js#1.20150507.2          ECMDERR Failed to execute "git clone https://github.com/Teleborder/FileSaver.js.git /tmp/66fc555821c50e89a4942c6fb6f73aeb/bower/e75d8091393c079c0030df2840479819-6065-GscqbA --progress", exit code of #128 Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","get"],"stdin":"protocol=https\nhost=github.com\n"} Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","get"],"stdin":"protocol=https\nhost=github.com\n"} Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","erase"],"stdin":"protocol=https\nhost=github.com\nusername=Username for 'https://github.com': \npassword=Password for 'https://Username for 'https://github.com': @github.com': \n"} Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","erase"],"stdin":"protocol=https\nhost=github.com\nusername=Username for 'https://github.com': \npassword=Password for 'https://Username for 'https://github.com': @github.com': \n"} fatal: Authentication failed for 'https://github.com/Teleborder/FileSaver.js.git/'
+  [ERROR]
+  [ERROR] Additional error details:
+  [ERROR] Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","get"],"stdin":"protocol=https\nhost=github.com\n"}
+  [ERROR] Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","get"],"stdin":"protocol=https\nhost=github.com\n"}
+  [ERROR] Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","erase"],"stdin":"protocol=https\nhost=github.com\nusername=Username for 'https://github.com': \npassword=Password for 'https://Username for 'https://github.com': @github.com': \n"}
+  [ERROR] Dev Containers CLI: RPC pipe not configured. Message: {"args":["git-credential-helper","erase"],"stdin":"protocol=https\nhost=github.com\nusername=Username for 'https://github.com': \npassword=Password for 'https://Username for 'https://github.com': @github.com': \n"}
+  [ERROR] fatal: Authentication failed for 'https://github.com/Teleborder/FileSaver.js.git/'
+  [INFO] ------------------------------------------------------------------------
+  [INFO] BUILD FAILURE
+  [INFO] ------------------------------------------------------------------------
+  [INFO] Total time:  4.185 s
+  [INFO] Finished at: 2023-04-10T13:11:33Z
+  [INFO] ------------------------------------------------------------------------ 看起来是 http 下载不下来，转而尝试 git 下载，进而报出了没有人家这个库的 git 权限，我尝试自己去请求这网站，结果人家 https://github.com/Teleborder 已经是 [This organization has no public repositories.] 的状态了。我在源码里面搜索了一下，有个这么个记载 file-saver.js v1.20150507.2 (https://github.com/Teleborder/FileSaver.js) - Authored by Eli Grey ， github 上面搜索 [FileSaver.js](https://github.com/eligrey/FileSaver.js) 结果当中 star 最多的 是 [eligrey](https://github.com/eligrey)/[FileSaver.js](https://github.com/eligrey/FileSaver.js)，这么看起来，好像是同一个作者啊，所以我按照 [eligrey/FileSaver.js: An HTML5 saveAs() FileSaver implementation (github.com)](https://github.com/eligrey/FileSaver.js) 中给的命令进行了安装。npm install file-saver --save 然后 bower install file-saver。由于替换了 FileSaver 包，所以一些配置也需要跟着更改：1. git地址需要改 apache-tez-0.10.1-src/tez-ui/src/main/webapp/bower-shrinkwrap.json 文件中的 FileSaver git地址需要改掉；2. 版本号需要改 apache-tez-0.10.1-src/tez-ui/src/main/webapp/bower.json 里面 "file-saver.js": "1.20150507.2" 改成 "file-saver": "1.2.0"； 3. FileSaver.js 文件的安装位置发生了变化 apache-tez-0.10.1-src/tez-ui/src/main/webapp/ember-cli-build.js 中 app.import('bower_components/file-saver.js/FileSaver.js'); 改成 app.import('bower_components/file-saver/FileSaver.js'); 然后再 编译 tez-ui 模块就往下进行了。
+* 在模块内编译是通过了，但是在 bigtop gradle 执行的时候报了错误 patching file tez-ui/src/main/webapp/bower-shrinkwrap.json
+  Hunk #1 FAILED at 2.
+  1 out of 2 hunks FAILED -- saving rejects to file tez-ui/src/main/webapp/bower-shrinkwrap.json.rej
+  patching file tez-ui/src/main/webapp/bower.json
+  Hunk #1 FAILED at 22.
+  1 out of 1 hunk FAILED -- saving rejects to file tez-ui/src/main/webapp/bower.json.rej
+  patching file tez-ui/src/main/webapp/ember-cli-build.js
+  Reversed (or previously applied) patch detected!  Assume -R? [n]
+  Apply anyway? [n]
+  Skipping patch.
+  1 out of 1 hunk ignored -- saving rejects to file tez-ui/src/main/webapp/ember-cli-build.js.rej
+  patching file tez-ui/src/main/webapp/bower-shrinkwrap.json
+  Hunk #1 succeeded at 27 (offset 3 lines).
+  Hunk #2 FAILED at 69.
+  1 out of 2 hunks FAILED -- saving rejects to file tez-ui/src/main/webapp/bower-shrinkwrap.json.rej
+  patching file tez-ui/src/main/webapp/bower.json
+  Hunk #1 FAILED at 23.
+  1 out of 1 hunk FAILED -- saving rejects to file tez-ui/src/main/webapp/bower.json.rej
+  error: Bad exit status from /var/tmp/rpm-tmp.n1uMUz (%prep)
+  Bad exit status from /var/tmp/rpm-tmp.n1uMUz (%prep)，原来上面提到的那个 tez 包下面的 FileSaver 的问题，bigtop 的开发人员也注意到了，并且在 home/bigtop-3.2.0/bigtop-packages/src/common/tez 准备了 diff 文件，要在编译的过程中“魔改”tez 的配置文件，而因为我们已经更改了这些文件，致使 diff 文件中的信息的匹配出现了问题。
+* 编译 ranger 的时候提示没有找到，一看原来是 bigtop.bom 里面把 ranger 的部分注释掉了，放开注释就可以开始编译了。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -213,3 +325,5 @@ mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755
 docker run -itd --name='centos-ambari-neo' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
 
 mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e
+
+docker run -itd --name='bigtop320'  --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env /usr/sbin/init

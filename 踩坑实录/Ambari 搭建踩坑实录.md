@@ -155,7 +155,7 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
   Running initdb: This may take up to a minute.
   About to start PostgreSQL
   ERROR: Exiting with exit code 1.
-  REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决 docekr
+  REASON: Unable to start PostgreSQL server. Exiting. 尝试单独启动 postgresql，遇到了这样的问题 Failed to get D-Bus connection: Operation not permitted failed to find PGDATA，然后查询到了 [(66条消息) Docker Centos7- Failed to get D-Bus connection: Operation not permitted failed to find PGDATA_成都-Python开发-王帅的博客-CSDN博客](https://blog.csdn.net/u012798683/article/details/108222670)，使用这些参数重新启动容器之后，ambari-server setup 过程中的问题得到了解决。但是这个解决方法挑环境，有时候行，有时候不行，最终按照 [docker中单容器开启多服务时systemctl引发的血案及破案过程 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/473252130) 里面提到的方法，替换了 systemctl，一劳永逸了
 
 ## bigtop的安装
 
@@ -295,35 +295,36 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
   Bad exit status from /var/tmp/rpm-tmp.n1uMUz (%prep)，原来上面提到的那个 tez 包下面的 FileSaver 的问题，bigtop 的开发人员也注意到了，并且在 home/bigtop-3.2.0/bigtop-packages/src/common/tez 准备了 diff 文件，要在编译的过程中“魔改”tez 的配置文件，而因为我们已经更改了这些文件，致使 diff 文件中的信息的匹配出现了问题。
 * 编译 ranger 的时候提示没有找到，一看原来是 bigtop.bom 里面把 ranger 的部分注释掉了，放开注释就可以开始编译了。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-docker run -itd --name='ubuntu-ambari-1' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/ubuntu-ambari-1
-
-/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-
 /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.362.b08-1.el7_9.x86_64
 
-mvn -B install jdeb:jdeb -DnewVersion=2.7.7.0.0 -DbuildNumber=388e072381e71c7755673b7743531c03a4d61be8 -DskipTests -Dpython.ver='python >= 2.6'  -Drat.skip=true -e
+docker network create --driver bridge --subnet 177.188.0.0/16 --gateway 177.188.0.1 wjd_net
 
 docker run -itd --name='centos-ambari-neo' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
 
+docker run -itd --name='ambari-server' --privileged=true --network='wjd_net' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-1:177.188.0.102 --add-host=ambari-agent-2:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
+
+docker network connect bridge ambari-server
+
 mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e
 
-docker run -itd --name='bigtop320'  --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env /usr/sbin/init
+docker run -itd --name='bigtop320'  --privileged=true -p 127.0.0.1:2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env /usr/sbin/init
+
+## UI安装阶段
+
+* Select version 阶段认不出 bigto怕容器的 url ，报错 **Attention:** Please make sure all repository URLs are valid before proceeding. [Click **here** to retry.](javascript:void(null))
+* 第一步，我想让容器能固定下来ip，这样方便后面的配置。参考了 [(69条消息) 七.Docker网络管理以及固定ip_docker 固定ip_dears-app的博客-CSDN博客](https://blog.csdn.net/u014295838/article/details/128522006)，和 [(69条消息) 如何修改docker容器的hostname_docker hostname_一木一石的博客-CSDN博客](https://blog.csdn.net/wendaowangqi/article/details/126283213)，把容器启动命令写成了 docker run -d --privileged=true --name='ambari-server' --network='subnet' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-2:177.188.0.102 --add-host=ambari-agent-3:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /sbin/init 这样，然后运行了 ambari-server，但是主机浏览器里面却打不开ammbari的主页。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rgweggr

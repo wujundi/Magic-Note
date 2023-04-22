@@ -297,34 +297,30 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
 
 /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.362.b08-1.el7_9.x86_64
 
-docker network create --driver bridge --subnet 177.188.0.0/16 --gateway 177.188.0.1 wjd_net
+docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='centos-ambari-neo' -p 127.0.0.1:8080:8080 -p 127.0.0.1:8440:8440 -p 127.0.0.1:8441:8441 --privileged=true registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
+docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='ambari-server' --privileged=true --network='wjd_net' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-1:177.188.0.102 --add-host=ambari-agent-2:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /usr/sbin/init
-
-docker network connect bridge ambari-server
-
-mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e
-
-docker run -itd --name='bigtop320'  --privileged=true -p 127.0.0.1:2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env /usr/sbin/init
+docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http
 
 ## UI安装阶段
 
 * Select version 阶段认不出 bigto怕容器的 url ，报错 **Attention:** Please make sure all repository URLs are valid before proceeding. [Click **here** to retry.](javascript:void(null))
-* 第一步，我想让容器能固定下来ip，这样方便后面的配置。参考了 [(69条消息) 七.Docker网络管理以及固定ip_docker 固定ip_dears-app的博客-CSDN博客](https://blog.csdn.net/u014295838/article/details/128522006)，和 [(69条消息) 如何修改docker容器的hostname_docker hostname_一木一石的博客-CSDN博客](https://blog.csdn.net/wendaowangqi/article/details/126283213)，把容器启动命令写成了 docker run -d --privileged=true --name='ambari-server' --network='subnet' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-2:177.188.0.102 --add-host=ambari-agent-3:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /sbin/init 这样，然后运行了 ambari-server，但是主机浏览器里面却打不开ammbari的主页。
+* 第一步，我想让容器能固定下来ip，这样方便后面的配置。参考了 [(69条消息) 七.Docker网络管理以及固定ip_docker 固定ip_dears-app的博客-CSDN博客](https://blog.csdn.net/u014295838/article/details/128522006)，和 [(69条消息) 如何修改docker容器的hostname_docker hostname_一木一石的博客-CSDN博客](https://blog.csdn.net/wendaowangqi/article/details/126283213)，把容器启动命令写成了 docker run -d --privileged=true --name='ambari-server' --network='subnet' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-2:177.188.0.102 --add-host=ambari-agent-3:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /sbin/init 这样，然后运行了 ambari-server，但是主机浏览器里面却打不开ammbari的主页。后来不管子网这个事情了，先试一下一个节点能不能顺利运行起来吧。如果一个节点不行，我就用三台IP固定的虚拟机来搞了，docker搞子网太搞心态了。
+* 前面好多环节填了各种信息，真要安装的时候遇到报错 http://127.0.0.1:2929/repodata/repomd.xml: [Errno 14]curl#7-"Failed connect to 127.0.0.1:2929; Connection refused"，看来一个 docker 想通过 127.0.0.1 访问另一个 docker 的服务还是不太行啊
+
+
+## 多台虚拟机环境下的部署
+
+* 192.168.188.101
+* 192.168.188.102
+* 192.168.188.103
+* ssh: connect to host 192.168.188.101 port 22: Connection refused，是因为刚装的 ubuntu 机器没有 ssh 服务，参考 [(72条消息) ssh: connect to host port 22: Connection refused_「已注销」的博客-CSDN博客](https://blog.csdn.net/LU_ZHAO/article/details/104698537)
 
 
 
+docker run-itd --name='ambari-server' --hostname='ambari-server'-p8080:8080-p8440:8440-p8441:8441registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
+docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-
-
-
-
-
-
-
-
-
-rgweggr
+docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable

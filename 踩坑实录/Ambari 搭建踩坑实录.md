@@ -309,7 +309,6 @@ docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.co
 * 第一步，我想让容器能固定下来ip，这样方便后面的配置。参考了 [(69条消息) 七.Docker网络管理以及固定ip_docker 固定ip_dears-app的博客-CSDN博客](https://blog.csdn.net/u014295838/article/details/128522006)，和 [(69条消息) 如何修改docker容器的hostname_docker hostname_一木一石的博客-CSDN博客](https://blog.csdn.net/wendaowangqi/article/details/126283213)，把容器启动命令写成了 docker run -d --privileged=true --name='ambari-server' --network='subnet' --ip 177.188.0.101 -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-agent-2:177.188.0.102 --add-host=ambari-agent-3:177.188.0.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo /sbin/init 这样，然后运行了 ambari-server，但是主机浏览器里面却打不开ammbari的主页。后来不管子网这个事情了，先试一下一个节点能不能顺利运行起来吧。如果一个节点不行，我就用三台IP固定的虚拟机来搞了，docker搞子网太搞心态了。
 * 前面好多环节填了各种信息，真要安装的时候遇到报错 http://127.0.0.1:2929/repodata/repomd.xml: [Errno 14]curl#7-"Failed connect to 127.0.0.1:2929; Connection refused"，看来一个 docker 想通过 127.0.0.1 访问另一个 docker 的服务还是不太行啊
 
-
 ## 多台虚拟机环境下的部署
 
 * 192.168.188.101
@@ -317,10 +316,32 @@ docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.co
 * 192.168.188.103
 * ssh: connect to host 192.168.188.101 port 22: Connection refused，是因为刚装的 ubuntu 机器没有 ssh 服务，参考 [(72条消息) ssh: connect to host port 22: Connection refused_「已注销」的博客-CSDN博客](https://blog.csdn.net/LU_ZHAO/article/details/104698537)
 
-
-
-docker run-itd --name='ambari-server' --hostname='ambari-server'-p8080:8080-p8440:8440-p8441:8441registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
-
 docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
+docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-2' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
+
+docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-3' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
+
+docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http
+
+* Confirm Hosts 步骤报错。详细 log 是
+
+```
+Warning: Permanently added 'ambari-server,192.168.188.101' (ECDSA) to the list of known hosts.
+Permission denied (publickey,password).
+SSH command execution finished
+host=ambari-server, exitcode=255
+Command end time 2023-04-22 14:55:09
+
+ERROR: Bootstrap of host ambari-server fails because previous action finished with non-zero exit code (255)
+ERROR MESSAGE: Warning: Permanently added 'ambari-server,192.168.188.101' (ECDSA) to the list of known hosts.
+Permission denied (publickey,password).
+
+STDOUT: 
+Warning: Permanently added 'ambari-server,192.168.188.101' (ECDSA) to the list of known hosts.
+Permission denied (publickey,password).
+```
+
+参考 [(72条消息) Ambari安装----Confirm Hosts Registering with the server failed解决办法_一只土肥圆的猿的博客-CSDN博客](https://blog.csdn.net/cp_panda_5/article/details/79993057) 发现是 ambari-agent 的配置文件里面有写死  server 的 hostname，所以参修改了 /etc/ambari-agent/conf/ambari-agent.ini 里面 [server] 模块下面的 hostname=ambari-server
+
+* 地方

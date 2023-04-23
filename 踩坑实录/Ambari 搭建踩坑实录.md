@@ -344,4 +344,5 @@ Permission denied (publickey,password).
 
 参考 [(72条消息) Ambari安装----Confirm Hosts Registering with the server failed解决办法_一只土肥圆的猿的博客-CSDN博客](https://blog.csdn.net/cp_panda_5/article/details/79993057) 发现是 ambari-agent 的配置文件里面有写死  server 的 hostname，所以参修改了 /etc/ambari-agent/conf/ambari-agent.ini 里面 [server] 模块下面的 hostname=ambari-server
 
-* 地方
+* 官网上提到的 python -m SimpleHTTPServer 在容器运行在linux虚拟机的情况下经常会报错，所以我上网查了一下，改为用 httpd 来搞，参考了 [Linux搭建简单的http文件服务器 - cavan丶keke - 博客园 (cnblogs.com)](https://www.cnblogs.com/cavan2021/p/16498933.html) 和 [httpd/nginx文件共享服务 - 简书 (jianshu.com)](https://www.jianshu.com/p/ff787883c13a) 两个文章，终于把 output 文件夹成功地暴露在 http 请求中了
+* 运行到安装程序的第9步，还是报错，改天再看详细的错误吧

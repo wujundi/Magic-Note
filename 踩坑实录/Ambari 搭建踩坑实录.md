@@ -345,4 +345,45 @@ Permission denied (publickey,password).
 参考 [(72条消息) Ambari安装----Confirm Hosts Registering with the server failed解决办法_一只土肥圆的猿的博客-CSDN博客](https://blog.csdn.net/cp_panda_5/article/details/79993057) 发现是 ambari-agent 的配置文件里面有写死  server 的 hostname，所以参修改了 /etc/ambari-agent/conf/ambari-agent.ini 里面 [server] 模块下面的 hostname=ambari-server
 
 * 官网上提到的 python -m SimpleHTTPServer 在容器运行在linux虚拟机的情况下经常会报错，所以我上网查了一下，改为用 httpd 来搞，参考了 [Linux搭建简单的http文件服务器 - cavan丶keke - 博客园 (cnblogs.com)](https://www.cnblogs.com/cavan2021/p/16498933.html) 和 [httpd/nginx文件共享服务 - 简书 (jianshu.com)](https://www.jianshu.com/p/ff787883c13a) 两个文章，终于把 output 文件夹成功地暴露在 http 请求中了
-* 运行到安装程序的第9步，还是报错，改天再看详细的错误吧
+* 运行到安装程序的第9步，还是报错，
+
+```
+2023-04-23 15:15:56,369 - The 'hadoop-hdfs-datanode' component did not advertise a version. This may indicate a problem with the component packaging. However, the stack-select tool was able to report a single version installed (3.2.0). This is the version that will be reported.
+2023-04-23 15:15:58,083 - The 'hadoop-hdfs-datanode' component did not advertise a version. This may indicate a problem with the component packaging. However, the stack-select tool was able to report a single version installed (3.2.0). This is the version that will be reported.
+Traceback (most recent call last):
+  File "/var/lib/ambari-agent/cache/stacks/BIGTOP/3.2.0/services/HDFS/package/scripts/datanode.py", line 172, in <module>
+    DataNode().execute()
+  File "/usr/lib/ambari-agent/lib/resource_management/libraries/script/script.py", line 355, in execute
+    method(env)
+  File "/var/lib/ambari-agent/cache/stacks/BIGTOP/3.2.0/services/HDFS/package/scripts/datanode.py", line 52, in install
+    self.install_packages(env)
+  File "/usr/lib/ambari-agent/lib/resource_management/libraries/script/script.py", line 876, in install_packages
+    name = self.format_package_name(package['name'])
+  File "/usr/lib/ambari-agent/lib/resource_management/libraries/script/script.py", line 569, in format_package_name
+    return self.get_package_from_available(name)
+  File "/usr/lib/ambari-agent/lib/resource_management/libraries/script/script.py", line 536, in get_package_from_available
+    raise Fail("No package found for {0}(expected name: {1})".format(name, name_with_version))
+resource_management.core.exceptions.Fail: No package found for hadoop_${stack_version}(expected name: hadoop_3_2_0)
+```
+
+仔细看了一下，script.py 是一个 python 脚本，貌似会遍历 bigtop 文件夹，并且会从文件名中通过正则来识别版本信息。那么第一个猜想就来了，是不是之前组件编译的时候选择了 ./gradlew hadoop-rpm -PparentDir=/usr/bigtop 的方式进而导致，和官方文档里面的 `./gradlew zookeeper-pkg` 这样的命令，致使最终的编译文件名称出现了差异呢？./gradlew clean zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop 重新编译之后，还是同样的一些文件。那么就看一下UI报错的时候，后台的日志里面究竟再干什么，从 /var/log/ambari-agent/ambari-agent.log 里面看到了一堆好像链接网络的日志，把其中的端口都记录了下来，重启容器并且把这些端口都放开
+
+
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+
+tcp        0      00.0.0.0:8670            0.0.0.0:*               LISTEN      13597/python
+
+tcp        0      00.0.0.0:8440            0.0.0.0:*               LISTEN      13250/java
+
+tcp        0      00.0.0.0:8441            0.0.0.0:*               LISTEN      13250/java
+
+tcp        0      0127.0.0.1:42903         0.0.0.0:*               LISTEN      168/node
+
+tcp        0      00.0.0.0:8080            0.0.0.0:*               LISTEN      13250/java
+
+tcp        0      00.0.0.0:5432            0.0.0.0:*               LISTEN      -
+
+tcp6       0      0 :::5432                 :::*                    LISTEN      -
+
+
+./gradlew allclean bigtop-groovy-pkg bigtop-jsvc-pkg bigtop-select-pkg bigtop-utils-pkg flink-pkg hadoop-pkg hbase-pkg hive-pkg kafka-pkg solr-pkg spark-pkg tez-pkg zeppelin-pkg zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop -PpkgSuffix

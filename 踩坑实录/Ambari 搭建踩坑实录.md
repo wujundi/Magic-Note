@@ -273,6 +273,7 @@ org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal o
   [INFO] Total time:  4.185 s
   [INFO] Finished at: 2023-04-10T13:11:33Z
   [INFO] ------------------------------------------------------------------------ 看起来是 http 下载不下来，转而尝试 git 下载，进而报出了没有人家这个库的 git 权限，我尝试自己去请求这网站，结果人家 https://github.com/Teleborder 已经是 [This organization has no public repositories.] 的状态了。我在源码里面搜索了一下，有个这么个记载 file-saver.js v1.20150507.2 (https://github.com/Teleborder/FileSaver.js) - Authored by Eli Grey ， github 上面搜索 [FileSaver.js](https://github.com/eligrey/FileSaver.js) 结果当中 star 最多的 是 [eligrey](https://github.com/eligrey)/[FileSaver.js](https://github.com/eligrey/FileSaver.js)，这么看起来，好像是同一个作者啊，所以我按照 [eligrey/FileSaver.js: An HTML5 saveAs() FileSaver implementation (github.com)](https://github.com/eligrey/FileSaver.js) 中给的命令进行了安装。npm install file-saver --save 然后 bower install file-saver。由于替换了 FileSaver 包，所以一些配置也需要跟着更改：1. git地址需要改 apache-tez-0.10.1-src/tez-ui/src/main/webapp/bower-shrinkwrap.json 文件中的 FileSaver git地址需要改掉；2. 版本号需要改 apache-tez-0.10.1-src/tez-ui/src/main/webapp/bower.json 里面 "file-saver.js": "1.20150507.2" 改成 "file-saver": "1.2.0"； 3. FileSaver.js 文件的安装位置发生了变化 apache-tez-0.10.1-src/tez-ui/src/main/webapp/ember-cli-build.js 中 app.import('bower_components/file-saver.js/FileSaver.js'); 改成 app.import('bower_components/file-saver/FileSaver.js'); 然后再 编译 tez-ui 模块就往下进行了。
+* 另外，后续在编译 tez-ui 的时候又遇到了一些零散问题，基本都在 bower 安装的前后，有的是 phatformJs 下载超时，那么我就自己把对应的包复制到 /tmp/phantomjs 位置，有的是 Failed to run task: 'bower install --allow-root=true' failed. 往上一翻日志就是 bower 安装某个包的时候报错了，我就 bower install 手动安装一下。自动安装的实在是有点多，搞得我在 /home 目录下面写了个 shell 脚本来安装。
 * 在模块内编译是通过了，但是在 bigtop gradle 执行的时候报了错误 patching file tez-ui/src/main/webapp/bower-shrinkwrap.json
   Hunk #1 FAILED at 2.
   1 out of 2 hunks FAILED -- saving rejects to file tez-ui/src/main/webapp/bower-shrinkwrap.json.rej
@@ -301,7 +302,7 @@ docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 re
 
 docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http
+docker run -itd --name='bigtop320' --privileged -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http /usr/sbin/init
 
 ## UI安装阶段
 
@@ -368,7 +369,6 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 
 仔细看了一下，script.py 是一个 python 脚本，貌似会遍历 bigtop 文件夹，并且会从文件名中通过正则来识别版本信息。那么第一个猜想就来了，是不是之前组件编译的时候选择了 ./gradlew hadoop-rpm -PparentDir=/usr/bigtop 的方式进而导致，和官方文档里面的 `./gradlew zookeeper-pkg` 这样的命令，致使最终的编译文件名称出现了差异呢？./gradlew clean zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop 重新编译之后，还是同样的一些文件。那么就看一下UI报错的时候，后台的日志里面究竟再干什么，从 /var/log/ambari-agent/ambari-agent.log 里面看到了一堆好像链接网络的日志，把其中的端口都记录了下来，重启容器并且把这些端口都放开
 
-
 Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
 
 tcp        0      00.0.0.0:8670            0.0.0.0:*               LISTEN      13597/python
@@ -384,6 +384,5 @@ tcp        0      00.0.0.0:8080            0.0.0.0:*               LISTEN      1
 tcp        0      00.0.0.0:5432            0.0.0.0:*               LISTEN      -
 
 tcp6       0      0 :::5432                 :::*                    LISTEN      -
-
 
 ./gradlew allclean bigtop-groovy-pkg bigtop-jsvc-pkg bigtop-select-pkg bigtop-utils-pkg flink-pkg hadoop-pkg hbase-pkg hive-pkg kafka-pkg solr-pkg spark-pkg tez-pkg zeppelin-pkg zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop -PpkgSuffix

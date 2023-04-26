@@ -317,9 +317,11 @@ docker run -itd --name='bigtop320' --privileged -p 2929:2929 registry.cn-hangzho
 * 192.168.188.103
 * ssh: connect to host 192.168.188.101 port 22: Connection refused，是因为刚装的 ubuntu 机器没有 ssh 服务，参考 [(72条消息) ssh: connect to host port 22: Connection refused_「已注销」的博客-CSDN博客](https://blog.csdn.net/LU_ZHAO/article/details/104698537)
 
-docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
+单节点测试环境：docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:ready-for-install
 
-docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-2' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
+docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:ready-for-install
+
+docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-2' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:ready-for-install
 
 docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-3' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
@@ -367,22 +369,11 @@ Traceback (most recent call last):
 resource_management.core.exceptions.Fail: No package found for hadoop_${stack_version}(expected name: hadoop_3_2_0)
 ```
 
-仔细看了一下，script.py 是一个 python 脚本，貌似会遍历 bigtop 文件夹，并且会从文件名中通过正则来识别版本信息。那么第一个猜想就来了，是不是之前组件编译的时候选择了 ./gradlew hadoop-rpm -PparentDir=/usr/bigtop 的方式进而导致，和官方文档里面的 `./gradlew zookeeper-pkg` 这样的命令，致使最终的编译文件名称出现了差异呢？./gradlew clean zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop 重新编译之后，还是同样的一些文件。那么就看一下UI报错的时候，后台的日志里面究竟再干什么，从 /var/log/ambari-agent/ambari-agent.log 里面看到了一堆好像链接网络的日志，把其中的端口都记录了下来，重启容器并且把这些端口都放开
+仔细看了一下，script.py 是一个 python 脚本，貌似会遍历 bigtop 文件夹，并且会从文件名中通过正则来识别版本信息。那么第一个猜想就来了，是不是之前组件编译的时候选择了 ./gradlew hadoop-rpm -PparentDir=/usr/bigtop 的方式进而导致，和官方文档里面的 `./gradlew zookeeper-pkg` 这样的命令，致使最终的编译文件名称出现了差异呢？./gradlew clean zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop 重新编译之后，还是同样的一些文件。所以这里就怀疑是不是编译的结果有问题，按照 ambari 官方给的编译命令 ./gradlew allclean bigtop-groovy-pkg bigtop-jsvc-pkg bigtop-select-pkg bigtop-utils-pkg flink-pkg hadoop-pkg hbase-pkg hive-pkg kafka-pkg solr-pkg spark-pkg tez-pkg zeppelin-pkg zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop -PpkgSuffix 进行编译之后，就能进行下去了。
 
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+* 在安装过程中，安装到 hive 的时候报了一个错误，resource_management.core.exceptions.Fail: Failed to download file from http://ambari-server:8080/resources/mysql-connector-java.jar due to HTTP error: HTTP Error 404: Not Found，按照 [(73条消息) ambari错误及解决方案_smartsense2.7.6_董不懂22的博客-CSDN博客](https://blog.csdn.net/github_39319229/article/details/113052828) 的方式 yum install -y mysql-connector-java 然后 cp /usr/share/java/mysql-connector-java.jar /var/lib/ambari-server/resources/
 
-tcp        0      00.0.0.0:8670            0.0.0.0:*               LISTEN      13597/python
 
-tcp        0      00.0.0.0:8440            0.0.0.0:*               LISTEN      13250/java
 
-tcp        0      00.0.0.0:8441            0.0.0.0:*               LISTEN      13250/java
 
-tcp        0      0127.0.0.1:42903         0.0.0.0:*               LISTEN      168/node
-
-tcp        0      00.0.0.0:8080            0.0.0.0:*               LISTEN      13250/java
-
-tcp        0      00.0.0.0:5432            0.0.0.0:*               LISTEN      -
-
-tcp6       0      0 :::5432                 :::*                    LISTEN      -
-
-./gradlew allclean bigtop-groovy-pkg bigtop-jsvc-pkg bigtop-select-pkg bigtop-utils-pkg flink-pkg hadoop-pkg hbase-pkg hive-pkg kafka-pkg solr-pkg spark-pkg tez-pkg zeppelin-pkg zookeeper-pkg -Dbuildwithdeps=true -PparentDir=/usr/bigtop -PpkgSuffix
+## 部署成功

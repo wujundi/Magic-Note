@@ -373,7 +373,12 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 
 * 在安装过程中，安装到 hive 的时候报了一个错误，resource_management.core.exceptions.Fail: Failed to download file from http://ambari-server:8080/resources/mysql-connector-java.jar due to HTTP error: HTTP Error 404: Not Found，按照 [(73条消息) ambari错误及解决方案_smartsense2.7.6_董不懂22的博客-CSDN博客](https://blog.csdn.net/github_39319229/article/details/113052828) 的方式 yum install -y mysql-connector-java 然后 cp /usr/share/java/mysql-connector-java.jar /var/lib/ambari-server/resources/
 
-
-
-
 ## 部署成功
+
+
+* 对外，单节点部署步骤
+* docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' wujundi/centos-ambari-280:one-node
+* docker exec -it ambari-server /bin/bash
+* ambari-server start
+* ambari-agent start
+* 浏览器，http://{your-machine-ip}:8080，用户名 admin，密码 admin

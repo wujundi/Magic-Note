@@ -375,7 +375,6 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 
 ## 部署成功
 
-
 * 对外，单节点部署步骤
 * docker run -itd --name='ambari-server' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-server' wujundi/centos-ambari-280:one-node
 * docker exec -it ambari-server /bin/bash

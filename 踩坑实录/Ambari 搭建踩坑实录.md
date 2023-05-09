@@ -383,5 +383,4 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 * 浏览器，http://{your-machine-ip}:8080，用户名 admin，密码 admin
 
 
-
-docker run -itd --name='ambari' -p 8080:8080 -p 8440:8440 -p 8441:8441 -p 9092:9092 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-280:one-node
+docker run -itd --name='ambari' -p 8080:8080 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-280:one-node

@@ -325,7 +325,7 @@ docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --h
 
 docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-3' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http
+docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-bigtop-320:ready-for-http
 
 * Confirm Hosts 步骤报错。详细 log 是
 
@@ -382,5 +382,4 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 * ambari-agent start
 * 浏览器，http://{your-machine-ip}:8080，用户名 admin，密码 admin
 
-
-docker run -itd --name='ambari' -p 8080:8080 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-280:one-node
+docker run -itd --name='ambari' -p 8080:8080 -p 8440:8440 -p 8441:8441 -p 9092:9092 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-280:one-node

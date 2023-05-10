@@ -10,3 +10,5 @@ $ docker-compose --profile schema up -d
 # 启动dolphinscheduler所有服务，指定profile为all
 $ docker-compose --profile all up -d
 ```
+
+* 后续过程中仍然遇到过访问不了的情况，一般就重启 api 容器就可以了

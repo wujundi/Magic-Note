@@ -386,3 +386,5 @@ docker run -itd --name='ambari' -p 8080:8080 -p 8440:8440 -p 8441:8441 -p 9092:9
 
 
 ## 环境联调部分
+
+* 命令行执行hive报错：org.apache.hadoop.security.AccessControlException: Permission denied: user=root, access=WRITE, inode="/user":hdfs:hdfs:drwxr-xr-x，参考了 [(83条消息) 解决 Permission denied: user=root, access=WRITE, inode=“/user“:hdfs:supergroup:drwxr-xr-x_HiBoyljw的博客-CSDN博客](https://blog.csdn.net/HiBoyljw/article/details/120222455) 先是 su hdfs ，然后 输入hadoop fs -chmod 777 /user 来进行授权，就可以了

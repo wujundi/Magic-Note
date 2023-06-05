@@ -304,6 +304,8 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 
 docker run -itd --name='bigtop320' --privileged -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http /usr/sbin/init
 
+* 最后，在暴露文件夹这块也不是很省心，官网的 python 工具经常不好用，最终换成了 httpd，直接在命令行里面 service httpd start 即可，就可以在浏览器访访问暴露的问价夹了 [Index of /bigtop](http://172.18.254.162:2929/bigtop/)
+
 ## UI安装阶段
 
 * Select version 阶段认不出 bigto怕容器的 url ，报错 **Attention:** Please make sure all repository URLs are valid before proceeding. [Click **here** to retry.](javascript:void(null))
@@ -325,7 +327,7 @@ docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --h
 
 docker run -itd --name='ambari-agent' -p 8080:8080 -p 8440:8440 -p 8441:8441 --hostname='ambari-agent-3' --add-host=ambari-server:192.168.188.101 --add-host=ambari-agent-2:192.168.188.102 --add-host=ambari-agent-3:192.168.188.103 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-neo:runable
 
-docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-bigtop-320:ready-for-http
+docker run -itd --name='bigtop320' -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-bigtop-3.2.0:ready-for-http
 
 * Confirm Hosts 步骤报错。详细 log 是
 
@@ -382,8 +384,62 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 * ambari-agent start
 * 浏览器，http://{your-machine-ip}:8080，用户名 admin，密码 admin
 
-docker run -itd --name='ambari' -p 8080:8080 -p 8082:8082 -p 8440:8440 -p 8441:8441 -p 9092:9092 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:neo
+docker run -itd --name='ambari' -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 19888:19888 -p 3000:3000 -p 10002:10002 -p 16010:16010 -p 18081:18081 -p 9995:9995 -p 8082:8082 -p 8983:8983 -p 8440:8440 -p 8441:8441 -p 9092:9092 -p 4040:4040 -p 4041:4041 -p 9000:9000 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:neo
 
 ## 环境联调部分
 
 * 命令行执行hive报错：org.apache.hadoop.security.AccessControlException: Permission denied: user=root, access=WRITE, inode="/user":hdfs:hdfs:drwxr-xr-x，参考了 [(83条消息) 解决 Permission denied: user=root, access=WRITE, inode=“/user“:hdfs:supergroup:drwxr-xr-x_HiBoyljw的博客-CSDN博客](https://blog.csdn.net/HiBoyljw/article/details/120222455) 先是 su hdfs ，然后 输入hadoop fs -chmod 777 /user 来进行授权，就可以了
+* 运行 spark-shell 报错，23/06/02 15:56:35 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+  23/06/02 15:56:35 WARN HiveConf: HiveConf of name hive.load.data.owner does not exist
+  23/06/02 15:56:35 WARN DomainSocketFactory: The short-circuit local reads feature cannot be used because libhadoop cannot be loaded.
+  23/06/02 15:56:36 WARN Utils: Service 'SparkUI' could not bind on port 4040. Attempting port 4041.
+  23/06/02 15:56:37 WARN Client: Neither spark.yarn.jars nor spark.yarn.archive is set, falling back to uploading libraries under SPARK_HOME. 重启了一下 spark 组件，重启过程中，貌似自己就好了？然后重启完成又不行了，这是什么鬼？启动期间只要访问 http://127.0.0.1:4041 ，控制台和网页页面会同时显示报错
+
+| URI:       | /jobs/                                                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| STATUS:    | 500                                                                                                                                              |
+| MESSAGE:   | java.util.NoSuchElementException: Failed to get the application information. If you are starting up Spark, please wait a while until it's ready. |
+| SERVLET:   | org.apache.spark.ui.JettyUtils$$anon$1-23706db8                                                                                                  |
+| CAUSED BY: | java.util.NoSuchElementException: Failed to get the application information. If you are starting up Spark, please wait a while until it's ready. |
+
+### Caused by:
+
+```
+java.util.NoSuchElementException: Failed to get the application information. If you are starting up Spark, please wait a while until it's ready.
+	at org.apache.spark.status.AppStatusStore.applicationInfo(AppStatusStore.scala:51)
+	at org.apache.spark.ui.jobs.AllJobsPage.render(AllJobsPage.scala:276)
+	at org.apache.spark.ui.WebUI.$anonfun$attachPage$1(WebUI.scala:90)
+	at org.apache.spark.ui.JettyUtils$$anon$1.doGet(JettyUtils.scala:81)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:503)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.sparkproject.jetty.servlet.ServletHolder.handle(ServletHolder.java:799)
+	at org.sparkproject.jetty.servlet.ServletHandler$ChainEnd.doFilter(ServletHandler.java:1631)
+	at org.apache.spark.ui.HttpSecurityFilter.doFilter(HttpSecurityFilter.scala:95)
+	at org.sparkproject.jetty.servlet.FilterHolder.doFilter(FilterHolder.java:193)
+	at org.sparkproject.jetty.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1601)
+	at org.sparkproject.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:548)
+	at org.sparkproject.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:233)
+	at org.sparkproject.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1434)
+	at org.sparkproject.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:188)
+	at org.sparkproject.jetty.servlet.ServletHandler.doScope(ServletHandler.java:501)
+	at org.sparkproject.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:186)
+	at org.sparkproject.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1349)
+	at org.sparkproject.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.sparkproject.jetty.server.handler.gzip.GzipHandler.handle(GzipHandler.java:763)
+	at org.sparkproject.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:234)
+	at org.sparkproject.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:127)
+	at org.sparkproject.jetty.server.Server.handle(Server.java:516)
+	at org.sparkproject.jetty.server.HttpChannel.lambda$handle$1(HttpChannel.java:400)
+	at org.sparkproject.jetty.server.HttpChannel.dispatch(HttpChannel.java:645)
+	at org.sparkproject.jetty.server.HttpChannel.handle(HttpChannel.java:392)
+	at org.sparkproject.jetty.server.HttpConnection.onFillable(HttpConnection.java:277)
+	at org.sparkproject.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:311)
+	at org.sparkproject.jetty.io.FillInterest.fillable(FillInterest.java:105)
+	at org.sparkproject.jetty.io.ChannelEndPoint$1.run(ChannelEndPoint.java:104)
+	at org.sparkproject.jetty.util.thread.strategy.EatWhatYouKill.runTask(EatWhatYouKill.java:338)
+	at org.sparkproject.jetty.util.thread.strategy.EatWhatYouKill.doProduce(EatWhatYouKill.java:315)
+	at org.sparkproject.jetty.util.thread.strategy.EatWhatYouKill.tryProduce(EatWhatYouKill.java:173)
+	at org.sparkproject.jetty.util.thread.strategy.EatWhatYouKill.produce(EatWhatYouKill.java:137)
+	at org.sparkproject.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:883)
+	at org.sparkproject.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1034)
+```

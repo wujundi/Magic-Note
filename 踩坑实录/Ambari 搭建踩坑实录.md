@@ -384,7 +384,8 @@ resource_management.core.exceptions.Fail: No package found for hadoop_${stack_ve
 * ambari-agent start
 * 浏览器，http://{your-machine-ip}:8080，用户名 admin，密码 admin
 
-docker run -itd --name='ambari' -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 19888:19888 -p 3000:3000 -p 10002:10002 -p 16010:16010 -p 18081:18081 -p 9995:9995 -p 8082:8082 -p 8983:8983 -p 8440:8440 -p 8441:8441 -p 9092:9092 -p 4040:4040 -p 4041:4041 -p 9000:9000 -p 10000:10000 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:neo
+docker run -itd --name='ambari' -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 19888:19888 -p 3000:3000 -p 10002:10002 -p 16010:16010 -p 18081:18081 -p 9995:9995 -p 8082:8082 -p 8983:8983 -p 8440:8440 -p 8441:8441 -p 9092:9092 -p 4040:4040 -p 4041:4041 -p 9000:9000 -p 10086:10086-p 5432:5432 --hostname='ambari-server' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:neo
+
 
 ## 环境联调部分
 

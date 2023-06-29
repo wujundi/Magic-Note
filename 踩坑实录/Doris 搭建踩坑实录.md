@@ -2,3 +2,4 @@
 
 * 按照官方教程进行 [通用编译 - Apache Doris](https://doris.apache.org/zh-CN/docs/dev/install/source-install/compilation-general)。不得不说，doris 这种提供专用编译镜像的行为，真的很友好。
 * docker run -itd --name doris  apache/doris:build-env-for-1.2
+* 上传到阿里云之后，编译结果可以在容器里面找到，docker run -itd --name='doris' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-doris-1.2.4.1:latest

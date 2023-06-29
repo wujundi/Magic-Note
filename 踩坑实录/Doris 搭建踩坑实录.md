@@ -21,3 +21,7 @@
 * /home/doris-output/be/conf/be.conf 看起来也没有什么需要改的
 * 然后，居然要使用 可以使用 mysql-client 连接到 FE。？？？这是什么操作？？？参考了 [centos7 yum仅安装mysql client客户端 - 参码踪 (shenmazong.com)](https://www.shenmazong.com/blog/1640010740671610880) 的操作，安装了  mysql client。我大概明白了，fe 自身相当于一个数据库，它会存储每一个 be 的 ip 和端口，而操作 fe 向其自身插入数据这件事情，是需要一个数据库链接客户端来做的，官方文档这里选择的工具就是 mysql client。mysql -h 127.0.0.1 -P 9030 -uroot 就看到进入到 Server version: 5.7.99 Doris version doris-1.2.4-1-Unknown 了。然后执行 ALTER SYSTEM ADD BACKEND "127.0.0.1:9050";
 * 然后执行 sh /home/doris-output/be/bin/start_be.sh --daemon，报了一个错误 Please set vm.max_map_count to be 2000000 under root using 'sysctl -w vm.max_map_count=2000000'. 搜了两篇相关的文章，[(93条消息) apache doris数据库搭建（一）_Hello.Reader的博客-CSDN博客](https://blog.csdn.net/weixin_43114209/article/details/131395344) 和 [(93条消息) Doris集群的安装部署_doris安装部署_Xlucas的博客-CSDN博客](https://blog.csdn.net/paicMis/article/details/130178291)，好像也没有提到什么特别的解法，都是照做而已，那我也先照做试试。
+* 再次启动，没有报错。
+* 去 FE 节点来看 BE 状态 mysql -h 127.0.0.1 -P 9030 -uroot，然后 SHOW PROC '/backends'; 发现 Alive 字段是 false，报错信息是 (172.17.0.2)[INTERNAL_ERROR]actual backend local ip: 172.17.0.2
+* 参考 [Doris浅略介绍 +部署+使用 (yii666.com)](https://www.yii666.com/blog/368463.html?action=onAll)，修改 BE 节点信息，先删除，alter system decommission backend "127.0.0.1:9050"，然后新加 ALTER SYSTEM ADD BACKEND "172.17.0.2:9050"
+* 浏览器访问 [Apache Doris](http://127.0.0.1:8030/home) 有效，用户名和密码就是doris fe 节点数据库的用户名和密码，即默认是 root 密码是空

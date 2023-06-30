@@ -9,7 +9,7 @@
 整体的流程还是参考官方文档，[标准部署 - Apache Doris](https://doris.apache.org/zh-CN/docs/dev/install/standard-deployment)，但是这里如果遇到一些不会操作的地方，还是得需要更细致的SOP，所以我找到了 [(93条消息) 最新Doris安装部署（保姆级教程）_蜗牛大白牙的博客-CSDN博客](https://blog.csdn.net/u013618714/article/details/130743031) 这么一篇。
 
 * 首先把doris这边编译出来的文件夹拷贝过来
-* 然后，修改linux环境，关闭swap，注意，原来的容器当中，就没有 etc/fatab 文件，我这里建了一个没有内容的 etc/fatab，然后用 swapoff -a 在不重启之前，临时关掉 swap，但是遇到了报错 swapoff: Not superuser.  我怀疑是容器的 root 权限不够，我重新用 --privileged 参数启动一下试试，果然啊，swapoff -a 顺利执行
+* 然后，修改linux环境，关闭swap，注意，原来的容器当中，就没有 /etc/fatab 文件，我这里建了一个没有内容的 /etc/fatab，然后用 swapoff -a 在不重启之前，临时关掉 swap，但是遇到了报错 swapoff: Not superuser.  我怀疑是容器的 root 权限不够，我重新用 --privileged 参数启动一下试试，果然啊，swapoff -a 顺利执行
 
 ## FE
 
@@ -25,3 +25,10 @@
 * 去 FE 节点来看 BE 状态 mysql -h 127.0.0.1 -P 9030 -uroot，然后 SHOW PROC '/backends'; 发现 Alive 字段是 false，报错信息是 (172.17.0.2)[INTERNAL_ERROR]actual backend local ip: 172.17.0.2
 * 参考 [Doris浅略介绍 +部署+使用 (yii666.com)](https://www.yii666.com/blog/368463.html?action=onAll)，修改 BE 节点信息，先删除，alter system decommission backend "127.0.0.1:9050"，然后新加 ALTER SYSTEM ADD BACKEND "172.17.0.2:9050"
 * 浏览器访问 [Apache Doris](http://127.0.0.1:8030/home) 有效，用户名和密码就是doris fe 节点数据库的用户名和密码，即默认是 root 密码是空
+
+## 后记
+
+* 然后可怕的事情发生了，ambari 启动hive 的时候报错，Underlying cause: com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException : Table 'performance_schema.session_variables' doesn't exist。看起来可能是昨天安装 mysql-client 的时候动了 hive 的 meta 数据，这波坑大了。
+* 我尝试重新安装了一下 Doris，发现只要安装完 fe，并且通过 mysql-client 链接了 FE 之后，ambari 的组件启动就会出现问题，迟迟不到 100%，或者启动失败
+* 我的猜想是，doris 会自带数据库链接的某些部分，并且在 FE 的安装过程中，会更新原有 mysql 的链接方式，致使 ambari 对于元数据的读取出现问题。
+* 那么我有一个大胆的想法，干脆，一不做二不休，我在安装 ambari 之前，先安装一个 5.7 版本的 mysql。这样一来 doris，ambari，spider-flow，streampark 可以共用一个 mysql

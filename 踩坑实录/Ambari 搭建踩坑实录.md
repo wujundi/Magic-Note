@@ -404,7 +404,6 @@ docker run -itd --name='ambari' -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 1988
 
 ### Caused by:
 
-```
 java.util.NoSuchElementException: Failed to get the application information. If you are starting up Spark, please wait a while until it's ready.
 	at org.apache.spark.status.AppStatusStore.applicationInfo(AppStatusStore.scala:51)
 	at org.apache.spark.ui.jobs.AllJobsPage.render(AllJobsPage.scala:276)
@@ -442,4 +441,5 @@ java.util.NoSuchElementException: Failed to get the application information. If 
 	at org.sparkproject.jetty.util.thread.strategy.EatWhatYouKill.produce(EatWhatYouKill.java:137)
 	at org.sparkproject.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:883)
 	at org.sparkproject.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1034)
-```
+
+# NEO重装计划

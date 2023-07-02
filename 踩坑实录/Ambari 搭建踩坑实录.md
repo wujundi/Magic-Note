@@ -443,3 +443,23 @@ java.util.NoSuchElementException: Failed to get the application information. If 
 	at org.sparkproject.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1034)
 
 # NEO重装计划
+
+## 捞 centos 镜像
+
+
+* 第一步，先把之前版本的镜像捞起来，docker pull registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:ready-for-install，然后在这个版本之上，先安装 mysql 5.7 ，docker run -itd --name='ambari' -p 3306:3306 -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 19888:19888 -p 3000:3000 -p 10002:10002 -p 16010:16010 -p 18081:18081 -p 9995:9995 -p 8082:8082 -p 8983:8983 -p 8440:8440 -p 8441:8441 -p 9092:9092 -p 4040:4040 -p 4041:4041 -p 9000:9000 -p 10086:10086 -p 5432:5432 -p 8081:8081 -p 8030:8030 -p 9020:9020 -p 9030:9030 -p 9010:9010 -p 9050:9050 -p 9060:9060 -p 8040:8040 -p 8060:8060 --hostname='ambari-server' --privileged registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:ready-for-install
+* 后来我又想了想，既然要搞。。。要不干脆搞个大的， 参照 [apache/bigtop: Mirror of Apache Bigtop (github.com)](https://github.com/apache/bigtop) 里面提供的 [bigtop/slaves Tags | Docker Hub](https://hub.docker.com/r/bigtop/slaves/tags/)，直接拷贝一个 centos 环境下来。是的要重新搞了，就搞个彻彻底底，干干净净。
+* 首先，选型，bigtop 3.2.0 提供的 centos 环境镜像有三个，分别对应 ppc64le、arm64 和 amd64，基于 [ppc64，ppc64le，ARM，AMD，X86，i386，x86_64（AMD64），AArch64的概念_ppc64el_ac.char的博客-CSDN博客](https://blog.csdn.net/sunny_day_day/article/details/108714946) 的解释，我在电脑上使用，应该是选用 AMD64 的，搞他！ docker pull bigtop/slaves:3.2.0-centos-7，然后把它传到阿里云，启一个新的 tag 叫 neo-new
+* 启动它，docker run -itd --name='ambari' -p 8080:8080 -p 50070:50070 -p 8088:8088 -p 19888:19888 -p 3000:3000 -p 10002:10002 -p 16010:16010 -p 18081:18081 -p 9995:9995 -p 8082:8082 -p 8983:8983 -p 8440:8440 -p 8441:8441 -p 9092:9092 -p 4040:4040 -p 4041:4041 -p 9000:9000 -p 10086:10086 -p 5432:5432 -p 8081:8081 -p 8030:8030 -p 9020:9020 -p 9030:9030 -p 9010:9010 -p 9050:9050 -p 9060:9060 -p 8040:8040 -p 8060:8060 --hostname='ambari-server' --privileged registry.cn-hangzhou.aliyuncs.com/wujundi/centos-ambari-2.8.0:neo-new
+* 看一下 centos 版本，cat /etc/centos-release，返回 CentOS Linux release 7.9.2009 (Core) ，哦了
+
+## 安装 mysql 5.7
+
+* 检查是不是预装了 mysql，service mysql start，返回 Redirecting to /bin/systemctl start mysql.service，同时报出了 Failed to get D-Bus connection: Operation not permitted，这个之前已经遇到过，还是参照 [docker中单容器开启多服务时systemctl引发的血案及破案过程 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/473252130)，首先备份现有的 /bin/systemctl，cp /bin/systemctl /bin/systemctl.bak，然后替换systemctl，将其替换成github上的这个，执行 wget https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl.py -O /bin/systemctl，然后赋权 sudo chmod a+x /bin/systemctl。验证效果，再次运行 service mysql start，已经不再报 D-BUS 错误了。
+* 安装新的 MySQL。这参考文档就茫茫多了，参考官方文档，[MySQL :: A Quick Guide to Using the MySQL Yum Repository](https://dev.mysql.com/doc/mysql-yum-repo-quick-guide/en/)，首先向yum仓库中增加mysql信息， wget https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm，然后 sudo rpm -Uvh https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm。然后选择要安装的版本，sudo yum-config-manager --disable mysql80-community ，和 sudo yum-config-manager --enable mysql57-community，然后再确认一下要安装的版本是不是就是想要的版本，yum repolist enabled | grep mysql，再然后执行安装就行了 sudo yum install mysql-community-server。
+* 然后测试一下，mysql -uroot -p，由于没设置过密码，想着是不是可以不输入密码直接回车，结果报了个错误，ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)，原来之前安装文档里面讲了，安装的时候默认为root设置了一个密码，可以通过 sudo grep 'temporary password' /var/log/mysqld.log 查看，用这个密码登录之后，ALTER USER 'root'@'localhost' IDENTIFIED BY '123456'; 结果提示 ERROR 1819 (HY000): Your password does not satisfy the current policy requirements，参考 [(94条消息) ERROR 1819 (HY000): Your password does not satisfy the current policy requirements_Stackflowed的博客-CSDN博客](https://blog.csdn.net/yuxielea/article/details/103800379)，先设置一个密码，用于继续后续操作 ALTER USER 'root'@'localhost' IDENTIFIED BY '#Mysql123'; 然后修改密码格式限制等级 SHOW VARIABLES LIKE 'validate_password%'; set global validate_password_policy=LOW; SHOW VARIABLES LIKE 'validate_password%'。设置完成之后，最后重置密码 ALTER USER 'root'@'localhost' IDENTIFIED BY 'mysql';
+
+## 安装 ambari 2.8.0
+
+* 参考官方教程 [Installation Guide for Ambari 2.8.0 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.8.0)
+* 如前所述，官方还没有放出 2.8.0 的下载，需要从 github 里面，按照 tag 来下载，地址在这里 [Release release-2.8.0-rc0 · apache/ambari (github.com)](https://github.com/apache/ambari/releases/tag/release-2.8.0-rc0)，执行下载 wget https://github.com/apache/ambari/archive/refs/tags/release-2.8.0-rc0.tar.gz

@@ -463,3 +463,5 @@ java.util.NoSuchElementException: Failed to get the application information. If 
 
 * 参考官方教程 [Installation Guide for Ambari 2.8.0 - Apache Ambari - Apache Software Foundation](https://cwiki.apache.org/confluence/display/AMBARI/Installation+Guide+for+Ambari+2.8.0)
 * 如前所述，官方还没有放出 2.8.0 的下载，需要从 github 里面，按照 tag 来下载，地址在这里 [Release release-2.8.0-rc0 · apache/ambari (github.com)](https://github.com/apache/ambari/releases/tag/release-2.8.0-rc0)，执行下载 wget https://github.com/apache/ambari/archive/refs/tags/release-2.8.0-rc0.tar.gz
+* 然后就是解压和 mvn 编译，mvn clean install rpm:rpm -DskipTests -Drat.skip=true -e
+* 没想到开着科学上网，还是会遇到 Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.2.1:exec (Bower install) on project ambari-admin: Command execution failed.: Process exited with an error: 1 (Exit value: 1) -> [Help 1] 我尝试单独打包 ambari-admin 模块，也是一个鸟样子。

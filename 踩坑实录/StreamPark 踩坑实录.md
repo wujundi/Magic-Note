@@ -1,5 +1,6 @@
 ## StreamPark 踩坑实录
 
+* 在 [Apache StreamPark (incubating)](https://streampark.apache.org/zh-CN/download/) 选择源码进行下载
 * 所以我找到了 StreamPark [安装部署 | Apache StreamPark (incubating)](https://streampark.apache.org/zh-CN/docs/user-guide/deployment)
 * 这里涉及到一个环境变量的问题，之前安装 ambari 的时候并没有注意环境变量，我是真的不知道 ambari 在安装的时候是往哪些目录里面安装的，所以这里我只能重新搞这两个镜像，这次一定要在安装界面截图保存。
 
@@ -9,7 +10,7 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 
 于是，我想到了，搜索大法，我用 vs code 从根目录开始，搜索全部带有 HADOOP_HOME 的文件，然后，我就打开了新世界的大门。不仅找到了很多 HADOOP_HOME 的赋值信息，还发现之前在 blueprint.json 里面见到的很多变量，比如 {{hadoop_home}}、{{hadoop_yarn_home}} 这些，在实际的文件中是已经被替换成文件目录了的。然后我从 root/.bashrc 里面看到有 source/etc/profile，进而找到了 /etc/profile，这里也是之前配置 JAVA_HOME 地方，按照 [安装部署 | Apache StreamPark (incubating)](https://streampark.apache.org/zh-CN/docs/user-guide/deployment/) 里面提到了，我配置了这几个环境变量，并且把他们的值替换成了在docker中搜索到的实际值。看起来都挺规整的，基本是 /usr/bigtop/3.2.0/usr/lib/ 下面的一级目录，只有 hbase 特殊一些，我搜到的是 export HBASE_HOME=/usr/bigtop/current/hbase-client，但我感觉是不是也和其他的是一个规则，应该是 exportHBASE_HOME=/usr/bigtop/3.2.0/usr/lib/hbase？？？先用后者吧，有问题记得回来看这一条。
 
-* 在数据库的设置环节，参照之前 ambari 安装页面上的信息，修改了 driver-class-name: com.mysql.jdbc.Driver，并且依然沿用了 按照 [(73条消息) ambari错误及解决方案_smartsense2.7.6_董不懂22的博客-CSDN博客](https://blog.csdn.net/github_39319229/article/details/113052828) 的方式 yum install -y mysql-connector-java ,然后按照 StreamPark 的要求复制了一份到它的lib目录 cp /usr/share/java/mysql-connector-java.jar /home/apache-streampark_2.12-2.1.0-incubating-bin/lib/
+* 在数据库的设置环节，参照之前 ambari 安装页面上的信息，修改了 driver-class-name: com.mysql.jdbc.Driver，并且依然沿用了 按照 [(73条消息) ambari错误及解决方案_smartsense2.7.6_董不懂22的博客-CSDN博客](https://blog.csdn.net/github_39319229/article/details/113052828) 的方式 yum install -y mysql-connector-java ,然后按照 StreamPark 的要求复制了一份到它的lib目录 cp /usr/share/java/mysql-connector-java.jar /home/apache-streampark_2.12-2.1.0-incubating-bin/lib/。
 * 参考 [Linux下通过shell进MySQL执行SQL或导入脚本 - zifeiy - 博客园 (cnblogs.com)](https://www.cnblogs.com/zifeiy/p/9981253.html) 执行数据初始化脚本。mysql < mysql-schema.sql ，报错 ERROR 1067 (42000) at line 28: Invalid default value for 'create_time'，搜了一下 [(86条消息) mysql为datetime类型的字段设置默认值current_timestamp，引发 Invalid default value for 错误_mysql datetime current_一滴水的眼泪的博客-CSDN博客](https://blog.csdn.net/qq_35112567/article/details/111677052) 所可能是版本太低，mysql --version 一下，果然 Ver 15.1 Distrib 5.5.68-MariaDB, for Linux (x86_64) using readline 5.1，那么，不动现有版本的情况下能解吗？参照 [mysql - MariaDB 中的日期时间 current_timestamp - IT工具网 (coder.work)](https://www.coder.work/article/2468851)，我把 current_timestamp 都改成了 current_timestamp() 的写法，结果还是报错
 * 醉了，转而试试 postgresql，参考 [PostgreSQL基本使用方法 - 简书 (jianshu.com)](https://www.jianshu.com/p/814fc0f880b8)，psql < xxxx.sql 或者 psql -f xxxx.sql 都可以。执行倒是也不报错，但是怎么也看不到数据库里面数据有变化呢？在我导入SQL之后，我尝试在 psql 里面重新执行见表语句，提示我表已经存在，那么，建到哪里去了呢？在psql里面使用 \d 终于看到了，原来这个 public 库并不会真正建一个库，所以在 \l 命令的时候，不会限制 public ，而 \d 时候可以直接看到这些表。
 * 在 streampark 的 bin 问价夹下面执行 startup.sh 遇到了报错 ERROR: streampark.workspace.local: "/opt/streampark_workspace" is invalid path, Please reconfigure in application.yml 和 NOTE: "streampark.workspace.local" Do not set under APP_HOME(/home/apache-streampark_2.12-2.1.0-incubating-bin). Set it to a secure directory outside of APP_HOME. 可能是因为目前还没有 /opt/streampark_workspace目录，有点搓哦，没有的话不能自动创建一下吗？创建了目录之后，问题解决。成功启动
@@ -21,3 +22,16 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 * Streampark 里面，Setting -> Flink Cluter 里面需要配置执行模式，选择了 yarn 模式之后，它就开始检查环境了，我这边还得手动启动 ambari 里面的服务
 * 水 Streampark 页面的时候，在进入 System -> Token Management 的时候会有报错，internal server error: ### Error querying database. Cause: org.postgresql.util.PSQLException: ERROR: relation "t_access_token" does not exist Position: 31 ### The error may exist in class path resource [mapper/system/AccessTokenMapper.xml] ### The error may involve org.apache.streampark.console.system.mapper.AccessTokenMapper.page-Inline ### The error occurred while setting parameters ### SQL: select count(*) as total from t_access_token t1 join t_user t2 on t1.user_id = t2.user_id ### Cause: org.postgresql.util.PSQLException: ERROR: relation "t_access_token" does not exist Position: 31 ; bad SQL grammar []; nested exception is org.postgresql.util.PSQLException: ERROR: relation "t_access_token" does not exist Position: 31。看了一下 postgresql 的表里面，还真的没有 t_access_token 表，检查了一下初始化脚本，对 t_access_token ，有建表语句，没有灌数语句。发现是原来脚本里面的 create sequence if not exists "public"."streampark_t_access_token_id_seq" 报错，ERROR:  syntax error at or near "not" LINE 20: create sequence if not exists "public"."streampark_t_access_...导致后续 t_access_token 的建表语句失败。
   去掉 if not exists 之后就好了，推测是版本问题，可能不支持 if not exists。我从建表的sql里面摘出来了 t_access_token 相关的部分，建了一个 pgsql-schema-fix.sql 脚本，然后执行了一把 psql < pgsql-schema-fix.sql。再回到界面，问题解决
+
+## NEO第二遍安装
+
+* [Apache StreamPark (incubating)](https://streampark.apache.org/zh-CN/download/) 页面，找到 apache 的下载 cdn
+* 下载，解压
+* 参考 [安装部署 | Apache StreamPark (incubating)](https://streampark.apache.org/zh-CN/docs/user-guide/deployment/)，通过在容器内继续搜索，确定各个组件的 HOME 变量的地址，新增到 /etc/profile ，然后 source /etc/profile。
+* 修改 /home/apache-streampark_2.11-2.1.1-incubating-bin/conf/application.yml，修改 profiles.active 为 mysql，修改 server:port 为 10086
+* 创建目录 mkdir /opt/streampark_workspace，对应的是 /home/apache-streampark_2.11-2.1.1-incubating-bin/conf/application.yml 里面配置的 workspace: local: 后面配置的值
+* 修改 /home/apache-streampark_2.11-2.1.1-incubating-bin/conf/application-mysql.yml，把数据库链接密码改掉
+* 下载 MySQL jdbc 驱动，官网地址是 [MySQL :: Download Connector/J](https://dev.mysql.com/downloads/connector/j/)，对应到具体的链接 wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.0.33.tar.gz，解压之后，cp /home/mysql-connector-j-8.0.33/mysql-connector-j-8.0.33.jar /home/apache-streampark_2.11-2.1.1-incubating-bin/lib
+* 初始化数据库 mysql -uroot -p < /home/apache-streampark_2.11-2.1.1-incubating-bin/script/schema/mysql-schema.sql
+* 导入数据 mysql -uroot -p < /home/apache-streampark_2.11-2.1.1-incubating-bin/script/data/mysql-data.sql
+* sh /home/apache-streampark_2.11-2.1.1-incubating-bin/bin/startup.sh

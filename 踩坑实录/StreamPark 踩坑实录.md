@@ -35,3 +35,9 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 * 初始化数据库 mysql -uroot -p < /home/apache-streampark_2.11-2.1.1-incubating-bin/script/schema/mysql-schema.sql
 * 导入数据 mysql -uroot -p < /home/apache-streampark_2.11-2.1.1-incubating-bin/script/data/mysql-data.sql
 * sh /home/apache-streampark_2.11-2.1.1-incubating-bin/bin/startup.sh
+
+
+## 平台的使用
+
+* 先到 /StreamPark/Setting 下面设置基础信息，配置 FLINK_HOME 的时候遇到了报错，java.lang.UnsupportedOperationException: The current Scala version of StreamPark is 2.11.12, but the scala version of Flink to be added is 2.12, which does not match, Please check
+  at org.apache.streampark.console.core.entity.FlinkEnv.doSetVersion(FlinkEnv.java:81)，看了一下 [(96条消息) StreamX添加Flink引擎时对scala版本的映射选择_flink scala 版本映射_江畔独步的博客-CSDN博客](https://blog.csdn.net/liuwei0376/article/details/124936342)，原来人家项目的源码就给了两套包，一套for scala 2.11，一套for scala 2.12，所以我重新下载了对应 2.12 版本 scala 的包，然后从之前的文件夹中，把修改好的配置文件拷贝过来，重新运行项目，这次 flink home 添加成功了。

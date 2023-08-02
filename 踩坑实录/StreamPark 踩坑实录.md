@@ -36,8 +36,35 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 * 导入数据 mysql -uroot -p < /home/apache-streampark_2.11-2.1.1-incubating-bin/script/data/mysql-data.sql
 * sh /home/apache-streampark_2.11-2.1.1-incubating-bin/bin/startup.sh
 
-
 ## 平台的使用
 
 * 先到 /StreamPark/Setting 下面设置基础信息，配置 FLINK_HOME 的时候遇到了报错，java.lang.UnsupportedOperationException: The current Scala version of StreamPark is 2.11.12, but the scala version of Flink to be added is 2.12, which does not match, Please check
   at org.apache.streampark.console.core.entity.FlinkEnv.doSetVersion(FlinkEnv.java:81)，看了一下 [(96条消息) StreamX添加Flink引擎时对scala版本的映射选择_flink scala 版本映射_江畔独步的博客-CSDN博客](https://blog.csdn.net/liuwei0376/article/details/124936342)，原来人家项目的源码就给了两套包，一套for scala 2.11，一套for scala 2.12，所以我重新下载了对应 2.12 版本 scala 的包，然后从之前的文件夹中，把修改好的配置文件拷贝过来，重新运行项目，这次 flink home 添加成功了。
+* 编辑任务，点击 Verify 的时候会报错，SQL check error，internal server error: No match found，到后台 /opt/apache-streampark_2.12-2.1.1-incubating-bin/logs/info.2023-08-02.log 里面看到了实际的报错日志
+
+
+2023-08-0213:10:06.171 StreamPark [XNIO-1 task-1] INFO  o.a.s.c.b.h.GlobalExceptionHandler:54 - Internal server error：
+
+java.lang.IllegalStateException: No match found
+
+    at java.util.regex.Matcher.group(Matcher.java:536)
+
+    at org.apache.streampark.common.conf.FlinkVersion.majorVersion$lzycompute(FlinkVersion.scala:99)
+
+    at org.apache.streampark.common.conf.FlinkVersion.majorVersion(FlinkVersion.scala:93)
+
+    at org.apache.streampark.common.conf.FlinkVersion.toString(FlinkVersion.scala:137)
+
+    at java.lang.String.valueOf(String.java:2994)
+
+* 这看起来有点像正则匹配的报错啊。。顺着报错，我下载了源码，追到了 /opt/apache-streampark-2.1.1-incubating-src/streampark-common/src/main/scala/org/apache/streampark/common/conf/FlinkVersion.scala 里面，代码里面各种命令转了一圈，是要执行 java -classpath /usr/bigtop/3.2.0/usr/lib/flink/lib/flink-dist-1.15.3.jar org.apache.flink.client.cli.CliFrontend --version，并且通过返回的值进行正则匹配。
+* 我尝试手动执行这个命令，遇到了报错 SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+  SLF4J: Defaulting to no-operation (NOP) logger implementation
+  SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+  Exception in thread "main" java.lang.RuntimeException: The configuration directory was not specified. Please specify the directory containing the configuration file through the 'FLINK_CONF_DIR' environment variable.
+  at org.apache.flink.client.cli.CliFrontend.getConfigurationDirectoryFromEnv(CliFrontend.java:1197)
+  at org.apache.f-incubating-src/streampark-flink/streampark-flink-shims/streampark-fl。其中的'shims'字样，在 streampark的报错里面也又见过，看来方向是对的。从[windows运行FLINK出现 FLINK_CONF_DIR问题__Mr. White的博客-CSDN博客](https://blog.csdn.net/weixin_43918355/article/details/118083976) 处受到启发，补充配置了一个 FLINK_CONF_DIR 的环境变量 exportFLINK_CONF_DIR=${FLINK_HOME}/conf，source /etc/profile 然后再试试，不报错了，但是也没有显示版本，而是打印的
+  SLF4J: Defaulting to no-operation (NOP) logger implementation
+  SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+  Version: `<unknown>`, Commit ID: DeadD0d0
+* 我试了一下 flink -v 返回的也是 Version: `<unknown>`, Commit ID: DeadD0d，要不我看看 flink -v 读取的究竟是什么，我给手动写死一下？通过 whereis flink，找到了 /usr/bin/flink ，里面写的是 exec /usr/bigtop/3.2.0/usr/lib/flink/bin/flink "@"，参考 [sell编程常用知识点_exec &#34;$@_shelutai的博客-CSDN博客](https://blog.csdn.net/shelutai/article/details/122739544)，这就是将 -v 作为参数传了过来

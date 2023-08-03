@@ -68,3 +68,37 @@ java.lang.IllegalStateException: No match found
   SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
   Version: `<unknown>`, Commit ID: DeadD0d0
 * 我试了一下 flink -v 返回的也是 Version: `<unknown>`, Commit ID: DeadD0d，要不我看看 flink -v 读取的究竟是什么，我给手动写死一下？通过 whereis flink，找到了 /usr/bin/flink ，里面写的是 exec /usr/bigtop/3.2.0/usr/lib/flink/bin/flink "@"，参考 [sell编程常用知识点_exec &#34;$@_shelutai的博客-CSDN博客](https://blog.csdn.net/shelutai/article/details/122739544)，这就是将 -v 作为参数传了过来
+* 按照番外部分的经验来看的话，是不是 version 显示不出来也是 jar 包的问题？从 /usr/bigtop/3.2.0/usr/lib/flink/bin/flink 来看，最后一句是 exec "${JAVA_RUN}"$JVM_ARGS$FLINK_ENV_JAVA_OPTS"${log_setting[@]}"-classpath"`manglePathList "$CC_CLASSPATH:$INTERNAL_HADOOP_CLASSPATHS"`"org.apache.flink.client.cli.CliFrontend"$@" 这句话里除了一些变量之外，关键的类就是 org.apache.flink.client.cli.CliFrontend 了，去源码里面找找。源码在 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-clients/src/main/java/org/apache/flink/client/cli/CliFrontend.java 这里还确实又 switch 里面在处理 -v 和 --version。这个类使用了 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-runtime/src/main/java/org/apache/flink/runtime/util/EnvironmentInformation.java 这里面就定义了那个【unknown】和【DeadD0d0】。这个类里面的环境信息最终是读取的 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-runtime/src/main/resources-filtered/.flink-runtime.version.properties，也就是编译后的 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-runtime/target/classes/.flink-runtime.version.properties。
+* 但是这个配置文件，在 bigtop 的打包里面到底在哪里，我不太知道。只能开启搜索大法了。但是并没有搜到。
+* 那就拷贝过来吧，放到了 /usr/bigtop/3.2.0/usr/lib/flink/conf/.flink-runtime.version.properties 这里，重启 flink，还是不行
+* 我去 bigtop 打包 的 flink 的 rpm 逐个解压，rpm2cpio xxxx.rpm | cpio -div，结果发现里面的东西就和 /usr/bigtop/3.2.0/usr/lib/flink 这里没有什么区别。如果实在不行。。。我打算修改源码进行硬编码了。
+
+
+
+
+
+
+
+## 番外
+
+* 番外，因为这个 flink -v 的异常，我注意到 flink 管理页面的异常，这和 [基于 Flink CDC 构建 MySQL 和 Postgres 的 Streaming ETL — CDC Connectors for Apache Flink® documentation (ververica.github.io)](https://ververica.github.io/flink-cdc-connectors/master/content/%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B/mysql-postgres-tutorial-zh.html) 里面给出的 Flink Web UI 可是不太一样，所以我怀疑，是不是我的 flink 环境本身还有问题？
+* 于是，我执行了 bash /usr/bigtop/3.2.0/usr/lib/flink/bin/sql-client.sh 果然也没有成功，报错是 find: ‘/usr/bigtop/3.2.0/usr/lib/flink/opt’: No such file or directory
+  find: ‘/usr/bigtop/3.2.0/usr/lib/flink/opt’: No such file or directory
+  [ERROR] Flink SQL Client JAR file 'flink-sql-client*.jar' neither found in classpath nor /opt directory should be located in /usr/bigtop/3.2.0/usr/lib/flink/opt.
+* 所以我先建了一个 opt/ 的文件夹
+* 然后我跑回到 bigtop 镜像里面，重新编译了 flink 终于在 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-table/flink-sql-client/target/flink-sql-client-1.15.3.jar 这里找到了编译出来的 jar 包。然后把它拷贝到了 /usr/bigtop/3.2.0/usr/lib/flink/opt 下面
+* 再执行，报了新的错，哈哈 Exception in thread "main" org.apache.flink.table.client.SqlClientException: Failed to parse the Python command line options.
+  at org.apache.flink.table.client.cli.CliOptionsParser.getPythonConfiguration(CliOptionsParser.java:387)
+  at org.apache.flink.table.client.cli.CliOptionsParser.parseEmbeddedModeClient(CliOptionsParser.java:276)
+  at org.apache.flink.table.client.SqlClient.startClient(SqlClient.java:181)
+  at org.apache.flink.table.client.SqlClient.main(SqlClient.java:161)
+  Caused by: java.lang.ClassNotFoundException: org.apache.flink.python.util.PythonDependencyUtils
+  at java.net.URLClassLoader.findClass(URLClassLoader.java:387)
+  at java.lang.ClassLoader.loadClass(ClassLoader.java:418)
+  at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:352)
+  at java.lang.ClassLoader.loadClass(ClassLoader.java:351)
+  at java.lang.Class.forName0(Native Method)
+  at java.lang.Class.forName(Class.java:348)
+  at org.apache.flink.table.client.cli.CliOptionsParser.getPythonConfiguration(CliOptionsParser.java:376)
+  ... 3 more
+* 顺着报错找到 flink-1.15.3/flink-table/flink-sql-client/src/main/java/org/apache/flink/table/client/cli/CliOptionsParser.java 这个类，看代码，它是需要调用 "org.apache.flink.python.util.PythonDependencyUtils" 的，那我去 flink 源码里找找有没有对应模块，下面有没有编译出来的 jar 包。然后我找到了这个 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-python/target/flink-python_2.12-1.15.3.jar，然后我把它拷贝到了 /usr/bigtop/3.2.0/usr/lib/flink/lib/flink-python_2.12-1.15.3.jar。在运行就成功啦，哈哈哈哈，开心。

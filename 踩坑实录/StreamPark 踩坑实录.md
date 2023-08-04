@@ -72,7 +72,8 @@ java.lang.IllegalStateException: No match found
 * 但是这个配置文件，在 bigtop 的打包里面到底在哪里，我不太知道。只能开启搜索大法了。但是并没有搜到。
 * 那就拷贝过来吧，放到了 /usr/bigtop/3.2.0/usr/lib/flink/conf/.flink-runtime.version.properties 这里，重启 flink，还是不行
 * 我去 bigtop 打包 的 flink 的 rpm 逐个解压，rpm2cpio xxxx.rpm | cpio -div，结果发现里面的东西就和 /usr/bigtop/3.2.0/usr/lib/flink 这里没有什么区别。如果实在不行。。。我打算修改源码进行硬编码了。
-
+* 我把源码里面的 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-clients/src/main/java/org/apache/flink/client/cli/CliFrontend.java 的 -v 部分的取值给改了，改成暴力写死 "1.15.3"，然后打包重新走 bigtop 的编译流程。说是简单一句话，重新打包恐生变数啊。
+* bigtop 编译的 hadoop 阶段报错，[INFO] error triple-beam@1.4.1: The engine "node" is incompatible with this module. Expected version ">= 14.0.0". Got "12.22.1"，看起来 node 要安装的部分组件其所需的版本已经迭代了。这种问题还真有解法，[error The engine “node“ is incompatible with this module. Expected version “^12.20.0 || ＞=14“. Got “_徐同保的博客-CSDN博客](https://blog.csdn.net/xutongbao/article/details/123071192) 比如这里提到的 yarn config set ignore-engines true。那我要怎么在 bigtop 打包的时候把这个命令做进去呢？在 hadoop 源码里面搜到 triple-beam@1.3.0，也就是说人家本来要安装的是 1.3.0 的版本，那么为什么实际安装的时候变成了 1.4.1 了呢？报错的前的一条是 angular-route@1.6.10，这个玩意在 /home/bigtop-3.2.0/dl/hadoop-3.3.4-src/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-applications/hadoop-yarn-applications-catalog/hadoop-yarn-applications-catalog-webapp/package.json 里面的配置是 "angular-route": "~1.6.4" 这个写法是啥意思？参考 [node-npm 依赖包版本号~和^的区别_【南汐】前端的博客-CSDN博客](https://blog.csdn.net/weixin_55639808/article/details/129747114)，这个写法确实会拉到 1.6.xx 里面最新的包，这不是坑人么。。。你怎么能确定人家小版本迭代就能符合你的打包要求？我决定把配置里面的 ~ 和 ^ 都去掉试试。然而改了之后，angular-route 确实是 1.6.4 了，但是 triple-beam@1.4.1。要不我显式指定 triple-beam@1.3.0？试了一下也没有什么用。这么推测下来是依赖的这几个包他们的上有也有依赖 triple-beam，但是应该是没有强限制其小版本，致使出现现在引用到了 triple-beam@1.4.1 的情况，最终参考了 [nodejs前端项目 如何显式指定某个依赖的版本 resolutions 字段 + npm-force-resolutions 插件 package-lock.json_锦天的博客-CSDN博客](https://blog.csdn.net/wuyujin1997/article/details/129098567) 在 package.json 里面增加了 "resolutions": {"triple-beam":"1.3.0"}，顺利过关！！！
 
 
 

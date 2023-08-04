@@ -304,7 +304,7 @@ docker run -itd --name='ambari-server' --hostname='ambari-server' -p 8080:8080 -
 
 docker run -itd --name='bigtop320' --privileged -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/bigtop3.2.0-centos-7-offical-build-env:ready-for-http /usr/sbin/init
 
-* 最后，在暴露文件夹这块也不是很省心，官网的 python 工具经常不好用，最终换成了 httpd，直接在命令行里面 service httpd start 即可，就可以在浏览器访访问暴露的问价夹了 [Index of /bigtop](http://172.18.254.162:2929/bigtop/)
+* 最后，在暴露文件夹这块也不是很省心，官网的 python 工具经常不好用，最终换成了 httpd，配置文件在 /etc/httpd/conf/httpd.conf，直接在命令行里面 service httpd start 即可，就可以在浏览器访访问暴露的问价夹了 [Index of /bigtop](http://172.18.254.162:2929/bigtop/)
 
 ## UI安装阶段
 

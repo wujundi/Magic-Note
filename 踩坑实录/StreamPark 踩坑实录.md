@@ -102,7 +102,19 @@ java.lang.IllegalStateException: No match found
 
     at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218)
 
-* 按照上面的报错，找到了这么一个类 /opt/apache-streampark-2.1.1-incubating-src/streampark-console/streampark-console-service/src/main/java/org/apache/streampark/console/core/service/impl/FlinkSqlServiceImpl.java，它所加载引用的类是 apache-streampark-2.1.1-incubating-src/streampark-flink/streampark-flink-shims/streampark-flink-shims-base/src/main/scala/org/apache/streampark/flink/core/FlinkSqlValidator.scala
+.....
+
+Caused by: java.lang.NoClassDefFoundError: org/apache/calcite/sql/validate/SqlConformance
+
+    at org.apache.streampark.flink.core.FlinkSqlValidator.verifySql(FlinkSqlValidator.scala)
+
+    ... 138 more
+
+Caused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.SqlConformance
+
+    at java.net.URLClassLoader.findClass(URLClassLoader.java:387)
+
+* 按照上面的报错，找到了这么一个类 /opt/apache-streampark-2.1.1-incubating-src/streampark-console/streampark-console-service/src/main/java/org/apache/streampark/console/core/service/impl/FlinkSqlServiceImpl.java，它所加载引用的类是 apache-streampark-2.1.1-incubating-src/streampark-flink/streampark-flink-shims/streampark-flink-shims-base/src/main/scala/org/apache/streampark/flink/core/FlinkSqlValidator.scala。报错里面最上层是 Caused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.SqlConformanceCaused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.SqlConformance，说的就是这个 FlinkSqlValidator.scala 里面定义的。我打算通过 maven 打包的方式把这个jar包搞下来，然后放到 lib 目录看看效果。FlinkSqlValidator.scala 所在的子项目中并没有再pom中出现 calcite。而且子项目编译出来的 jar 包已经存在在 lib 目录当中了。那看起来就是缺的应该是其上游的东西，以至于都不需要打在包内。
 
 ## 番外
 

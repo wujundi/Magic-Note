@@ -74,6 +74,33 @@ java.lang.IllegalStateException: No match found
 * 我把源码里面的 /home/bigtop-3.2.0/dl/flink-1.15.3/flink-clients/src/main/java/org/apache/flink/client/cli/CliFrontend.java 的 -v 部分的取值给改了，改成暴力写死 "1.15.3"，然后打包重新走 bigtop 的编译流程。说是简单一句话，重新打包恐生变数啊。
 * bigtop 编译的 hadoop 阶段报错，[INFO] error triple-beam@1.4.1: The engine "node" is incompatible with this module. Expected version ">= 14.0.0". Got "12.22.1"，看起来 node 要安装的部分组件其所需的版本已经迭代了。这种问题还真有解法，[error The engine “node“ is incompatible with this module. Expected version “^12.20.0 || ＞=14“. Got “_徐同保的博客-CSDN博客](https://blog.csdn.net/xutongbao/article/details/123071192) 比如这里提到的 yarn config set ignore-engines true。那我要怎么在 bigtop 打包的时候把这个命令做进去呢？在 hadoop 源码里面搜到 triple-beam@1.3.0，也就是说人家本来要安装的是 1.3.0 的版本，那么为什么实际安装的时候变成了 1.4.1 了呢？报错的前的一条是 angular-route@1.6.10，这个玩意在 /home/bigtop-3.2.0/dl/hadoop-3.3.4-src/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-applications/hadoop-yarn-applications-catalog/hadoop-yarn-applications-catalog-webapp/package.json 里面的配置是 "angular-route": "~1.6.4" 这个写法是啥意思？参考 [node-npm 依赖包版本号~和^的区别_【南汐】前端的博客-CSDN博客](https://blog.csdn.net/weixin_55639808/article/details/129747114)，这个写法确实会拉到 1.6.xx 里面最新的包，这不是坑人么。。。你怎么能确定人家小版本迭代就能符合你的打包要求？我决定把配置里面的 ~ 和 ^ 都去掉试试。然而改了之后，angular-route 确实是 1.6.4 了，但是 triple-beam@1.4.1。要不我显式指定 triple-beam@1.3.0？试了一下也没有什么用。这么推测下来是依赖的这几个包他们的上有也有依赖 triple-beam，但是应该是没有强限制其小版本，致使出现现在引用到了 triple-beam@1.4.1 的情况，最终参考了 [nodejs前端项目 如何显式指定某个依赖的版本 resolutions 字段 + npm-force-resolutions 插件 package-lock.json_锦天的博客-CSDN博客](https://blog.csdn.net/wuyujin1997/article/details/129098567) 在 package.json 里面增加了 "resolutions": {"triple-beam":"1.3.0"}，顺利过关！！！
 * bigtop 顺利编译完毕之后，我准备在现有的 ambari 里面先删除 flink，然后再重新安装 flink。先把 bigtop 的文件暴露服务启动起来，然后把 ambari 的全部服务都启动起来，然后再 ambari 的 UI 页面上直接就可以操作。重新安装之后 flink -v 还是 unknown。这个流程根本就没有读取 bigtop。。就是表面上删掉了 flink 的服务，实际上对于代码不会有本质的改变。要动真格的，还得是重装。
+* 重装回来之后还是报错，不过报的不是同一个错误了。现在是
+
+2023-08-0802:20:06.291 StreamPark [XNIO-1 task-3] ERRORo.a.s.c.c.s.impl.FlinkSqlServiceImpl:205 - verifySql invocationTargetException: java.lang.reflect.InvocationTargetException
+
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+
+    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+
+    at java.lang.reflect.Method.invoke(Method.java:498)
+
+    at org.apache.streampark.console.core.service.impl.FlinkSqlServiceImpl.lambda$verifySql$0(FlinkSqlServiceImpl.java:199)
+
+    at org.apache.streampark.flink.proxy.FlinkShimsProxy$.$anonfun$proxyVerifySql$1(FlinkShimsProxy.scala:157)
+
+    at org.apache.streampark.common.util.ClassLoaderUtils$.runAsClassLoader(ClassLoaderUtils.scala:38)
+
+    at org.apache.streampark.flink.proxy.FlinkShimsProxy$.proxyVerifySql(FlinkShimsProxy.scala:157)
+
+    at org.apache.streampark.flink.proxy.FlinkShimsProxy.proxyVerifySql(FlinkShimsProxy.scala)
+
+    at org.apache.streampark.console.core.service.impl.FlinkSqlServiceImpl.verifySql(FlinkSqlServiceImpl.java:192)
+
+    at org.apache.streampark.console.core.service.impl.FlinkSqlServiceImpl\$\$FastClassBySpringCGLIB$$d657a89c.invoke(\<generated>)
+
+    at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218)
 
 ## 番外
 

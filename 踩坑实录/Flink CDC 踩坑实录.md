@@ -146,3 +146,5 @@ ExceptionDetails:
   Bytecode:
 
     0x0000000: 2a2b b601 18b0，参考了[flink redis connector 报错Caused by: java.lang.VerifyError: Bad return type_Thomas杨大炮的博客-CSDN博客](https://blog.csdn.net/weixin_42598278/article/details/129609783)，怀疑是字段类型写的有问题，所以检查了一下，暂时去掉了可能引起争议的时间类型，只保留 int 类型的 id 字段，试试看。还是一样的报错，那么看起来就不是sql里面写的类型的问题了。通过这个 [proguard混淆后出现java.lang.VerifyError: Bad return type错误_proguard 混淆后 启动报错_码上致富的博客-CSDN博客](https://blog.csdn.net/mashangzhifu/article/details/123155567) 案例，可以看出 Reason 的意思是，某个地方需要的是 org/antlr/v4/runtime/Parser，但是实际传入的却是 io/debezium/ddl/parser/mysql/generated/MySqlParser 因此出现了问题。我在 /opt/NOAH_source_reference/flink-cdc-connectors-release-2.4.0/flink-connector-mysql-cdc/src/main/java/io/debezium/connector/mysql/antlr/listener/DefaultValueParserListener.java 里面找到了 importio.debezium.ddl.parser.mysql.generated.MySqlParser; 那么就是说，给出的这个类，是 flink cdc 的 jar 包给的。我怀疑是我刚刚放入的 antlr4-runtime-4.7.jar 药不对症，下载 antlr 的源码搜一搜。/opt/NOAH_source_reference/antlr4-4.7/runtime/Java/src/org/antlr/v4/runtime/TokenStream.java 这说明 TokenStream 确实是在 antlr4-runtime 这个模块，没毛病。然后我又下载了 debezium 的源码，看看是不是之前上传的 debezium 包有过药不对症的问题。
+
+* 测试 git

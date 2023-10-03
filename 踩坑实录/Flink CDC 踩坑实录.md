@@ -145,3 +145,5 @@ org.apache.flink.table.planner.loader.DelegateExecutorFactory
     * 参考 [Java 打包 FatJar 方法小结 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/43238220)，/opt/NOAH_source_reference/flink-cdc-connectors-release-2.4.0/flink-sql-connector-mysql-cdc/pom.xml 里面使用的就是 maven-shade-plugin，但是看起来好像并没有 relocate debezium，那么这里 include 到的包，如果 HDFS 已经上传了单独了，我下都拿掉，包括 flink-connector-debezium-2.4.0.jar、antlr4-runtime-4.7.jar、connect-api-2.8.1.jar、kafka-clients-2.8.1.jar
     * 报错换了，看起来起作用了。看起来之前和 debezium 相关的那些 jar 包不需要引入，因为 flink-sql-connector-mysql-cdc-2.4.0.jar 是一个 all in one 思路下的 fat jar，所以只要把这个 jar 包放到 HDFS 就好了。
 * 新的报错是 Causedby: org.apache.flink.util.FlinkRuntimeException: Cannot read the binlog filename and position via 'SHOW MASTER STATUS'. Make sure your server is correctly configured，看起来已经是在尝试读 binlog 了，参考 [mysql开启bin log_mysql开启binlog-CSDN博客](https://blog.csdn.net/weixin_46039745/article/details/132223528)，在 /etc/my.cnf 里面增加参数之后，重启 mysqld 服务
+* 报错换了，Causedby: java.net.ConnectException: Connection refused (Connection refused)，开了 switchhost 之后，问题解决了。
+* 然后去 doris 里面看到数据有了，开心，自此 flink cdc 就算走通了。

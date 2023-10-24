@@ -62,3 +62,7 @@ filesystem
 mysql-cdc
 
 看起来是因为 没有认出来 'connector'='kafka',
+
+在 flink 源码里面找了一下，发现有这么一个模块，/opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors 这下面就有 flink-connector-kafka
+
+老规矩，找 jar 包，传 HDFS

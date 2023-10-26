@@ -106,3 +106,15 @@ Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalo
 新建了 doris 表，新建了一个 kafka_2_doris 的任务
 
 启动任务的时候，链接超时，YARN 管理页面也报出资源问题 Application is added to the scheduler and is not yet activated. Queue's AM resource limit exceeded，看来现在默认队列不行，还是得调整
+
+检擦了一下 YARN 的信息，最大 46G，目前已经起了两个应用，占用 30G，这和 Minimum Container Size (Memory) 15G 是吻合的，所以怀疑是 YARN 按照 Minimum Container Size (Memory) 分配资源，导致容器最多只能运行 45/15 = 3 个应用，我调小一下试试。
+
+重启之后，集群资源降低了。
+
+重新启动任务，YARN占用内存总资源大概在 6G左右，此问题得到解决
+
+---
+
+启动之后继续报错 Caused by: org.apache.calcite.sql.validate.SqlValidatorException: No match found for function signature get_json_object(`<CHARACTER>`, `<CHARACTER>`)  看来是不认这个函数。查看了 https://developer.aliyun.com/ask/543695 之后，决定尝试换成 
+
+JSON_EXTRACT 试试。坑，JSON_EXTRACT，也不行。从 https://ost.51cto.com/posts/17088 这里面得到了一个 MODULE 的概念，可以尝试引入 hive MODULE.

@@ -101,4 +101,8 @@ Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalo
 
 ---
 
-下面来到了 flink sql 读取 kafka 的环节
+下面来到了 flink sql 读取 kafka 的环节，读取 kafka 之后可以写入 doris
+
+新建了 doris 表，新建了一个 kafka_2_doris 的任务
+
+启动任务的时候，链接超时，YARN 管理页面也报出资源问题 Application is added to the scheduler and is not yet activated. Queue's AM resource limit exceeded，看来现在默认队列不行，还是得调整

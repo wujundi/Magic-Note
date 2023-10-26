@@ -2,6 +2,8 @@
 
 这里需要看一下 flink SQL 读写 kafka 的情况
 
+---
+
 第一版本写入程序我是这样写的，但是报错了，但是暂时我还没有找到具体的报错在哪里
 
 CREATETABLEifnotexists test_kafka_sink_1 (
@@ -65,4 +67,38 @@ mysql-cdc
 
 在 flink 源码里面找了一下，发现有这么一个模块，/opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors 这下面就有 flink-connector-kafka
 
-老规矩，找 jar 包，传 HDFS
+老规矩，找 jar 包，传 HDFS。然后重启应用再试试
+
+
+---
+
+新的报错是 Caused by: org.apache.flink.table.api.ValidationException: One or more required options are missing. Missing required options are: properties.bootstrap.servers。
+
+看起来上面的那个问题解决了，那这回查一下 properties.bootstrap.servers 是什么，看起来好像是要指定kafka的服务器和端口.
+
+加上 'properties.bootstrap.servers'='127.0.0.1:9092' 这个参数之后，再次启动
+
+---
+
+新的报错 
+
+```
+Caused by: org.apache.flink.client.program.ProgramInvocationException: The main method caused an error: Table sink 'default_catalog.default_database.test_kafka_sink_1' doesn't support consuming update and delete changes which is produced by node TableSourceScan(table=[[default_catalog, default_database, cdc_mysql_source]], fields=[id, content, create_time])
+
+Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalog.default_database.test_kafka_sink_1' doesn't support consuming update and delete changes which is produced by node TableSourceScan(table=[[default_catalog, default_database, cdc_mysql_source]], fields=[id, content, create_time])
+
+```
+
+在 https://blog.csdn.net/weixin_42764556/article/details/115630239 这里大概找到了答案，错误1：doesn't support consuming update and delete changes which is produced by node TableSourceScan
+解答：flink1.11之后引入了CDC（Change Data Capture，变动数据捕捉）阿里大神开源的，此次错误是因为Source源是mysql-cdc所以获取的数据类型为Changelog格式，所以在WITH kafka的时候需要指定format=debezium-json。
+
+改完之后开始运行，这个问题得以解决。
+
+---
+
+那么问题就来到了下一步，如何看到 topic 里面的数据状态呢？好像看不到，那么就直接往下进行吧
+
+
+---
+
+下面来到了 flink sql 读取 kafka 的环节

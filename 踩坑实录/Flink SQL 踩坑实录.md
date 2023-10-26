@@ -117,4 +117,14 @@ Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalo
 
 启动之后继续报错 Caused by: org.apache.calcite.sql.validate.SqlValidatorException: No match found for function signature get_json_object(`<CHARACTER>`, `<CHARACTER>`)  看来是不认这个函数。查看了 https://developer.aliyun.com/ask/543695 之后，决定尝试换成 
 
-JSON_EXTRACT 试试。坑，JSON_EXTRACT，也不行。从 https://ost.51cto.com/posts/17088 这里面得到了一个 MODULE 的概念，可以尝试引入 hive MODULE.
+JSON_EXTRACT 试试。坑，JSON_EXTRACT，也不行。从 https://ost.51cto.com/posts/17088 这里面得到了一个 MODULE 的概念，可以尝试引入 hive MODULE. 按照文章中的说法，我去 flink connector 模块找到了 /opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors/flink-sql-connector-hive-3.1.2/target/flink-sql-connector-hive-3.1.2_2.12-1.15.3.jar ，看一下这个是不是。
+
+要调试的话，还有点点麻烦，我先找找命令行怎么直接启动 flink sql client，bash 这个文件就可以 /usr/bigtop/3.2.0/usr/lib/flink/bin/sql-client.sh 测试了一下 load 模块的指令，也没啥问题。
+
+现在的报错是 Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.mapred.JobConf，查了一下 ，[flink sql org.apache.hadoop.mapred.JobConf_mob649e8157aaee的技术博客_51CTO博客](https://blog.51cto.com/u_16175447/7257465) 这里的说法是这个类是配置参数用的，在这里 [Flink 集成 Hive 踩坑过程总结（持续更新） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/545472819?utm_id=0) 找到了更多的信息，我也去找找 hadoop-mapreduce-client-core-*.*.*.jar，在 /usr/bigtop/3.2.0/usr/lib/hadoop/client/hadoop-mapreduce-client-core-3.3.4.jar 这里发现了，上传 HDFS，牛逼，报错真的变了，这个问题就算解决了。
+
+---
+
+新的报错是 Caused by: org.apache.flink.table.api.TableException: Cannot find table '`default_catalog`.`default_database`.`doris_test_table_1`' in any of the catalogs [default_catalog], nor as a temporary table.
+
+好像是没有识别到 doris 表的库名。

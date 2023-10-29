@@ -127,4 +127,20 @@ JSON_EXTRACT 试试。坑，JSON_EXTRACT，也不行。从 https://ost.51cto.com
 
 新的报错是 Caused by: org.apache.flink.table.api.TableException: Cannot find table '`default_catalog`.`default_database`.`doris_test_table_1`' in any of the catalogs [default_catalog], nor as a temporary table.
 
-好像是没有识别到 doris 表的库名。
+好像是没有识别到 doris 表的库名。仔细一看，是 flink sql 里面定义的 sink 表和 insert 语句的 sink 表，表名没写成一样。
+
+---
+
+新的报错 Caused by: org.apache.flink.client.program.ProgramInvocationException: The main method caused an error: Property group.id is required when using committed offset for offsets initializer
+
+在 sql 中 kafka 表的定义部分增加了 'properties.group.id'='flink_test_123456', 的参数
+
+---
+
+新报错 Caused by: java.lang.RuntimeException: Failed to get metadata for topics [test_topic_1].
+
+Caused by: org.apache.flink.kafka.shaded.org.apache.kafka.common.errors.TimeoutException: Timed out waiting for a node assignment. Call: describeTopics。上网搜索找到了 [Flink读取kafka数据报错-CSDN博客](https://blog.csdn.net/QYHuiiQ/article/details/131544485) 这个。所以我在 ambari 这里做了修改，change listeners from PLAINTEXT://localhost:9092 to PLAINTEXT://127.0.0.1:9092
+
+然后，任务倒是启动了，但是 doris 里面迟迟没有数据呀，而且 EFAK 也显示不出现有 topic 了，看起来 PLAINTEXT://127.0.0.1:9092 的影响还挺大，然后我换成了 PLAINTEXT://noah:9092，EFAK显示正常，Topic test_topic_1 的页面能看到数据抽样，说明写入 kafka 生效了。
+
+doris 里面也有了，看起来数据的更新周期和check的时间间隔有关，现在设置的是 SET'execution.checkpointing.interval'='5s';

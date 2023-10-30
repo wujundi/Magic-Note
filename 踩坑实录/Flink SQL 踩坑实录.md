@@ -69,7 +69,6 @@ mysql-cdc
 
 老规矩，找 jar 包，传 HDFS。然后重启应用再试试
 
-
 ---
 
 新的报错是 Caused by: org.apache.flink.table.api.ValidationException: One or more required options are missing. Missing required options are: properties.bootstrap.servers。
@@ -80,7 +79,7 @@ mysql-cdc
 
 ---
 
-新的报错 
+新的报错
 
 ```
 Caused by: org.apache.flink.client.program.ProgramInvocationException: The main method caused an error: Table sink 'default_catalog.default_database.test_kafka_sink_1' doesn't support consuming update and delete changes which is produced by node TableSourceScan(table=[[default_catalog, default_database, cdc_mysql_source]], fields=[id, content, create_time])
@@ -98,7 +97,6 @@ Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalo
 
 那么问题就来到了下一步，如何看到 topic 里面的数据状态呢？好像看不到，那么就直接往下进行吧
 
-
 ---
 
 下面来到了 flink sql 读取 kafka 的环节，读取 kafka 之后可以写入 doris
@@ -115,7 +113,7 @@ Caused by: org.apache.flink.table.api.TableException: Table sink 'default_catalo
 
 ---
 
-启动之后继续报错 Caused by: org.apache.calcite.sql.validate.SqlValidatorException: No match found for function signature get_json_object(`<CHARACTER>`, `<CHARACTER>`)  看来是不认这个函数。查看了 https://developer.aliyun.com/ask/543695 之后，决定尝试换成 
+启动之后继续报错 Caused by: org.apache.calcite.sql.validate.SqlValidatorException: No match found for function signature get_json_object(`<CHARACTER>`, `<CHARACTER>`)  看来是不认这个函数。查看了 https://developer.aliyun.com/ask/543695 之后，决定尝试换成
 
 JSON_EXTRACT 试试。坑，JSON_EXTRACT，也不行。从 https://ost.51cto.com/posts/17088 这里面得到了一个 MODULE 的概念，可以尝试引入 hive MODULE. 按照文章中的说法，我去 flink connector 模块找到了 /opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors/flink-sql-connector-hive-3.1.2/target/flink-sql-connector-hive-3.1.2_2.12-1.15.3.jar ，看一下这个是不是。
 

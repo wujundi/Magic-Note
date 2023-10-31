@@ -123,27 +123,6 @@ hadoop 源码的类是 /home/bigtop-3.2.0/dl/hadoop-3.3.4-src/hadoop-common-proj
 ---
 
 
-
-CREATECATALOG paimon_catalog WITH (
-
-    'type'='paimon'
-
-    ,'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
-
-);
-
-USECATALOG paimon_catalog;
-
--- create a word count table
-
-CREATETABLE paimon_test_table (
-
-    id intPRIMARYKEYNOT ENFORCED
-
-    ,content STRING
-
-);
-
 CREATETABLEifnotexists test_kafka_sink_1 (
 
   id int
@@ -174,6 +153,28 @@ CREATETABLEifnotexists test_kafka_sink_1 (
 
 );
 
+CREATECATALOG paimon_catalog WITH (
+
+    'type'='paimon'
+
+    ,'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
+
+);
+
+USECATALOG paimon_catalog;
+
+-- create a word count table
+
+CREATETABLEifnotexists paimon_test_db.paimon_test_table (
+
+    id intPRIMARYKEYNOT ENFORCED
+
+    ,content STRING
+
+    ,create_time TIMESTAMP
+
+);
+
 -- paimon requires checkpoint interval in streaming mode
 
 SET'execution.checkpointing.interval'='10 s';
@@ -186,11 +187,15 @@ SELECT  id
 
     ,content
 
-  FROM test_kafka_sink_1
+    ,create_time
+
+  FROM default_catalog.default_database.test_kafka_sink_1
 
 ;
 
 ---
+
+
 
 报错 Caused by: org.apache.flink.table.catalog.exceptions.CatalogException: Paimon Catalog only supports paimon tables, but you specify  'connector'= 'kafka' when using Paimon Catalog，调整 kafka table 的位置
 
@@ -205,3 +210,71 @@ SELECT  id
 ---
 
 还真是环境问题，放到线上跑。。。就OK了。
+
+---
+
+读取 paimon 数据，写入 doris
+
+-- switch to streaming mode
+SET 'execution.runtime-mode' = 'streaming';
+-- enable checkpoint
+SET 'execution.checkpointing.interval' = '5s';
+
+-- 支持同步insert/update/delete事件
+CREATE TABLE doris_sink (
+  id int
+  ,content STRING
+  ,create_time TIMESTAMP
+)
+WITH (
+  'connector' = 'doris',
+  'fenodes' = '127.0.0.1:18030',
+  'table.identifier' = 'test_db.doris_test_table',
+  'username' = 'root',
+  'password' = '',
+  'sink.properties.format' = 'json',
+  'sink.properties.read_json_by_line' = 'true',
+  'sink.enable-delete' = 'true',  -- 同步删除事件
+  'sink.label-prefix' = 'doris_label'
+);
+
+CREATE CATALOG paimon_catalog WITH (
+    'type'='paimon'
+    ,'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
+);
+
+insert into doris_sink
+select id
+       ,content
+       ,null as create_time
+  FROM paimon_catalog.paimon_test_db.paimon_test_table
+;
+
+---
+
+报错：Caused by: org.apache.calcite.sql.validate.SqlValidatorException: Object 'paimon_catalog' not found
+
+难道还要回回都显示的创建 catalog 么？
+
+CREATECATALOG paimon_catalog WITH (
+
+    'type'='paimon'
+
+    ,'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
+
+);
+
+---
+
+通车仪式，撒花庆祝！！！！
+
+
+伴随着第一条数据从接口采集入mysql，通过 flink cdc 流经 kafka、经过 paimon、最终落入 doris，忙活了大半年的个人项目终于完成了“通车仪式”！！！
+
+踩坑无数，整晚与这茫茫多的失败日志为伍。
+
+后面整理一下使用文档，把它发到 github 上，希望可以帮助到更多的人。
+
+自此，流式数仓的“硬件”已经齐备，接下来就是我 sql boy 的老本行了。
+
+龙珠已经集齐，我要开始召唤神龙了！！！

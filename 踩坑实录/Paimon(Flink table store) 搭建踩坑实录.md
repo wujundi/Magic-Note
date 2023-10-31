@@ -24,3 +24,34 @@
 编译好了，把 /opt/NOAH_source_reference/incubator-paimon-release-0.5.0-incubating/paimon-flink/paimon-flink-1.15/target/paimon-flink-1.15-0.5.0-incubating.jar 上传到 HDFS
 
 ---
+
+然后对照着 https://paimon.apache.org/docs/0.5/engines/flink/ 和 https://paimon.apache.org/docs/0.5/concepts/file-operations/ 来进行操作
+
+阿里云这边也有个文档，主要是针对云上环境的，胜在每一步是在干什么比较详细 https://www.alibabacloud.com/help/zh/emr/emr-on-ecs/user-guide/integrate-paimon-with-flink?spm=a2c63.p38356.0.0.658b1a45Ld7v5T
+
+还有一些民间博客，https://manor.blog.csdn.net/article/details/132001087 和 https://blog.csdn.net/weixin_42354436/article/details/131634720，胜在参数可借鉴吧
+
+---
+
+在 sql-client 里面执行
+
+CREATE CATALOG paimon_catalog WITH (
+    'type'='paimon',
+    'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
+);
+
+遇到报错 java.lang.ClassNotFoundException: org.apache.hadoop.hdfs.HdfsConfiguration
+
+我把 hadoop-hdfs-3.3.4.jar 拷贝到了 /usr/bigtop/3.2.0/usr/lib/flink/lib/ 下面再试一下，还是不行
+
+---
+
+
+
+USE CATALOG paimon_catalog;
+
+CREATE TABLE paimon_test_table (
+   id          BIGINT PRIMARY KEY NOT ENFORCED
+  ,content     STRING
+  ,create_time TIMESTAMP
+);

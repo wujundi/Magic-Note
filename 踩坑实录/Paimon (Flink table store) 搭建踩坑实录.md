@@ -87,7 +87,7 @@ CREATE CATALOG paimon_catalog WITH (
 
 ---
 
-新的报错是 
+新的报错是
 
 [ERROR] Could not execute SQL statement. Reason:
 org.apache.flink.table.api.ValidationException: Unable to create catalog 'paimon_catalog'.
@@ -116,25 +116,92 @@ hadoop 源码的类是 /home/bigtop-3.2.0/dl/hadoop-3.3.4-src/hadoop-common-proj
 
 ---
 
-整一个不知所措，重启一下试试吧
+整一个不知所措，重启一下试试吧，还是老样子。
+
+真的是没办法了，直接上线试试，看看通过 YARN 的日志能不能看到具体的报错原因
+
+---
 
 
 
+CREATECATALOG paimon_catalog WITH (
 
+    'type'='paimon'
 
+    ,'warehouse'='hdfs://noah:8020/paimon/paimon_catalog'
 
-
-
-
-
-
-
-
-
-USE CATALOG paimon_catalog;
-
-CREATE TABLE paimon_test_table (
-   id          BIGINT PRIMARY KEY NOT ENFORCED
-  ,content     STRING
-  ,create_time TIMESTAMP
 );
+
+USECATALOG paimon_catalog;
+
+-- create a word count table
+
+CREATETABLE paimon_test_table (
+
+    id intPRIMARYKEYNOT ENFORCED
+
+    ,content STRING
+
+);
+
+CREATETABLEifnotexists test_kafka_sink_1 (
+
+  id int
+
+  ,content STRING
+
+  ,create_time TIMESTAMP
+
+) WITH (
+
+  'connector'='kafka',
+
+  'topic'='test_topic_1',
+
+  'properties.bootstrap.servers'='noah:9092',
+
+  -- 'properties.security.protocol' = 'SASL_PLAINTEXT',
+
+  -- 'properties.sasl.mechanism' = 'GSSAPI',
+
+  -- 'properties.sasl.kerberos.service.name' = 'kafka',
+
+  'properties.group.id'='flink_paimon_test',
+
+  'scan.startup.mode'='earliest-offset',
+
+  'value.format'='debezium-json'-- 接 flink-cdc 不能用 json，必须指定为 debezium-json
+
+);
+
+-- paimon requires checkpoint interval in streaming mode
+
+SET'execution.checkpointing.interval'='10 s';
+
+-- write streaming data to dynamic table
+
+INSERTINTO paimon_test_table
+
+SELECT  id
+
+    ,content
+
+  FROM test_kafka_sink_1
+
+;
+
+---
+
+报错 Caused by: org.apache.flink.table.catalog.exceptions.CatalogException: Paimon Catalog only supports paimon tables, but you specify  'connector'= 'kafka' when using Paimon Catalog，调整 kafka table 的位置
+
+---
+
+报错 Caused by: org.apache.flink.table.catalog.exceptions.TableAlreadyExistException: Table (or view) default.paimon_test_table already exists in Catalog paimon_catalog. 也算一个好消息，看来 paimon_catalog 是已经建成了，hadoop fs -ls /paimon/paimon_catalog/ 一下发现确实，已经有文件了 /paimon/paimon_catalog/default.db。sql 里面增加一下 if not exists 应该就好了。
+
+---
+
+报错 Caused by: org.apache.calcite.runtime.CalciteContextException: From line 4, column 8 to line 4, column 24: Object 'test_kafka_sink_1' not found，因为中途换了 catalog，所以不认识 test_kafka_sink_1 了，from 这个地方改成了 FROM default_catalog.default_database.test_kafka_sink_1 这样的形式。
+
+---
+
+还真是环境问题，放到线上跑。。。就OK了。

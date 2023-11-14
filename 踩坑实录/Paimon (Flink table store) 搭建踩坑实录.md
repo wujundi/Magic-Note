@@ -122,7 +122,6 @@ hadoop 源码的类是 /home/bigtop-3.2.0/dl/hadoop-3.3.4-src/hadoop-common-proj
 
 ---
 
-
 CREATETABLEifnotexists test_kafka_sink_1 (
 
   id int
@@ -195,8 +194,6 @@ SELECT  id
 
 ---
 
-
-
 报错 Caused by: org.apache.flink.table.catalog.exceptions.CatalogException: Paimon Catalog only supports paimon tables, but you specify  'connector'= 'kafka' when using Paimon Catalog，调整 kafka table 的位置
 
 ---
@@ -267,7 +264,6 @@ CREATECATALOG paimon_catalog WITH (
 ---
 
 通车仪式，撒花庆祝！！！！
-
 
 伴随着第一条数据从接口采集入mysql，通过 flink cdc 流经 kafka、经过 paimon、最终落入 doris，忙活了大半年的个人项目终于完成了“通车仪式”！！！
 

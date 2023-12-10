@@ -110,11 +110,11 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 2、sudo docker run -itd --name='bigtop320' --privileged   registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-repo-ready-for-http /usr/sbin/init
 
-4、将 bigtop 镜像中编译后 bigtop 项目目录拷贝到 noah 容器的  /opt 目录下
+4、将 bigtop 镜像中编译后 bigtop 项目的 output 文件夹拷贝到 noah 容器的  /opt/NOAH_repositories/ 目录下
 
 5、yum install httpd
 
-6、修改 /etc/httpd/conf/httpd.conf，修改 Listen 2929，修改 Alias /bigtop /opt/bigtop-release-3.2.0/output，修改 <Directory "/opt/bigtop-release-3.2.0/output">，修改 Options Indexes FollowSymLinks，增加 ServerSignature Off
+6、修改 /etc/httpd/conf/httpd.conf，修改 Listen 2929，修改 Alias /bigtop /opt/NOAH_repositories/bigtop-release-3.2.0/output，修改 <Directory "/opt/NOAH_repositories/bigtop-release-3.2.0/output">，修改 Options Indexes FollowSymLinks，增加 ServerSignature Off
 
 7、浏览器 http://127.0.0.1:2929/bigtop/
 
@@ -134,9 +134,9 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 3、tar -zxvf mysql-connector-j-8.2.0.tar.gz
 
-4、mkdir mysql-connector && mv mysql-connector-j-8.2.0 mysql-connector/mysql-connector-j-8.2.0
+4、mkdir NOAH_mysql_connector && mv mysql-connector-j-8.2.0 NOAH_mysql_connector/mysql-connector-j-8.2.0
 
-5、ambari-server setup --jdbc-db=mysql --jdbc-driver=/opt/mysql-connector/mysql-connector-j-8.2.0/mysql-connector-j-8.2.0.jar
+5、ambari-server setup --jdbc-db=mysql --jdbc-driver=/opt/NOAH_mysql_connector/mysql-connector-j-8.2.0/mysql-connector-j-8.2.0.jar
 
 6、service mysqld start
 
@@ -156,8 +156,10 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 14、create database hive;
 
-15、页面上继续操作，修改 hadoop.proxyuser.* 为 root；修改 Minimum Container Size (Memory) 为 1
+15、页面上继续操作，修改 Database URL 为 jdbc:mysql://localhost:3306/hive
+
+16、到 ALL CONFIGURATIONS 页面的时候，修改 hadoop.proxyuser.* 为 root；修改 yarn.scheduler.minimum-allocation-mb 为 1 MB
 
 ---
 
-docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118
+上一般本 NOAH 镜像可以查看 docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118

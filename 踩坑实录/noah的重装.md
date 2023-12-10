@@ -164,6 +164,4 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 ---
 
-ambari-installed-test-20231210
-
-上一般本 NOAH 镜像可以查看 docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118
+上一版本 NOAH 镜像可以查看 docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118

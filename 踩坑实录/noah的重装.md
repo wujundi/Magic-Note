@@ -32,6 +32,10 @@
 
 如果遇到不行的情况，需要重新安装httpd，先 yum remove httpd，然后 yum install httpd，放心历史版本的配置文件会自动重命名保留的。亲测刚开始启动无效，重装就OK了
 
+4、将 
+
+5、yum install httpd
+
 ---
 
 基础环境搭建
@@ -46,7 +50,7 @@
 
 5、sudo chmod a+x /bin/systemctl
 
-6、cd /opt & wget https://dev.mysql.com/get/mysql80-community-release-el7-11.noarch.rpm
+6、cd /opt && wget https://dev.mysql.com/get/mysql80-community-release-el7-11.noarch.rpm
 
 7、sudo yum localinstall mysql80-community-release-el7-11.noarch.rpm
 
@@ -66,22 +70,21 @@
 
 15、ALTER USER 'root'@'localhost' IDENTIFIED BY '#Mysql123';
 
-16、SHOW VARIABLES LIKE 'validate_password%'; 
+16、SHOW VARIABLES LIKE 'validate_password%';
 
-17、set global validate_password_policy=LOW; 
+17、set global validate_password_policy=LOW;
 
-18、set global validate_password_length=4; 
+18、set global validate_password_length=4;
 
 19、SHOW VARIABLES LIKE 'validate_password%'
 
 20、设置完成之后，最后重置密码 ALTER USER 'root'@'localhost' IDENTIFIED BY 'mysql';
 
-
 ---
 
-ambari 安装
+ambari rpm 安装
 
-1、cd /opt & wget https://github.com/apache/ambari/archive/refs/tags/release-2.8.0-rc0.tar.gz
+1、cd /opt && wget https://github.com/apache/ambari/archive/refs/tags/release-2.8.0-rc0.tar.gz
 
 2、tar xfvz release-2.8.0-rc0.tar.gz
 
@@ -93,4 +96,68 @@ ambari 安装
 
 6、修改 ambari-release-2.8.0-rc0/ambari-server/pom.xml，将 ambari-serviceadvisor 的版本修改为 2.8.0.0.0
 
-7、mvn clean install rpm:rpm -DskipTests -Drat.skip=true
+7、mvn clean install rpm:rpm -DbuildNumber=test -DskipTests -Drat.skip=true -e
+
+8、yum install /opt/ambari-release-2.8.0-rc0/ambari-server/target/rpm/ambari-server/RPMS/x86_64/ambari-server-2.8.0.0-0.x86_64.rpm
+
+9、jdk 环节，选择自定义 jdk
+
+```shell
+[root@xxx]# which java
+/usr/bin/java
+[root@xxx]# ls -lrt /usr/bin/java
+lrwxrwxrwx. 1 root root 22 7月  23 14:43 /usr/bin/java -> /etc/alternatives/java
+[root@xxx]# ls -lrt /etc/alternatives/java
+lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+找到java路径后，去掉最后的/jre/bin/java，在profile文件中进行修改
+```
+
+10、参考 https://code84.com/813098.html ，在 /etc/profile 里增加 JAVA_HOME 变量
+
+11、source /etc/profile
+
+12、ambari-server setup
+
+13、yum install /opt/ambari-release-2.8.0-rc0/ambari-agent/target/rpm/ambari-agent/RPMS/x86_64/ambari-agent-2.8.0.0-0.x86_64.rpm
+
+---
+
+ambari web 页面安装
+
+第1步里面，base url 一定不能写死某个特定的ip，这里可以用127.0.0.1，并且勾选下面的 skip
+
+第7步里面，需要选择 hive 元数据的存放位置。这里如果选择了 new mysql 那就走回了老路，默认安装的是 mysql 5.6 ，到后边安装其他组件的时候就傻眼了。所以坚决选择 Existing MySQL
+
+1、点开页面上提示的下载mysql连接驱动的网站，选择 Platform Independent，这样可以下载到 tar.gz，否则都是各种安装包格式。
+
+2、 cd /opt && wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.2.0.tar.gz
+
+3、tar -zxvf mysql-connector-j-8.2.0.tar.gz
+
+4、mkdir mysql-connector && mv mysql-connector-j-8.2.0 mysql-connector/mysql-connector-j-8.2.0
+
+5、ambari-server setup --jdbc-db=mysql --jdbc-driver=/opt/mysql-connector/mysql-connector-j-8.2.0/mysql-connector-j-8.2.0.jar
+
+6、service mysqld start
+
+7、mysql -uroot -p
+
+8、SHOW VARIABLES LIKE 'validate_password%';
+
+9、set global validate_password_policy=LOW;
+
+10、set global validate_password_length=4;
+
+11、SHOW VARIABLES LIKE 'validate_password%';
+
+12、CREATE USER 'hive'@'localhost' IDENTIFIED BY 'hive';
+
+13、GRANT ALL PRIVILEGES ON * . * TO 'hive'@'localhost';
+
+14、create database hive;
+
+15、页面上继续操作，修改 hadoop.proxyuser.* 为 root；修改 Minimum Container Size (Memory) 为 1
+
+---
+
+docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118

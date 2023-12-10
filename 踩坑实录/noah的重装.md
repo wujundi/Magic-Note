@@ -22,23 +22,7 @@
 
 ---
 
-首先，测试 bigtop320 镜像是否可以启动
-
-1、docker pull registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-repo-ready-for-http
-
-2、sudo docker run -itd --name='bigtop320' --privileged -p 2929:2929 registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-repo-ready-for-http /usr/sbin/init
-
-3、浏览器 http://127.0.0.1:2929/bigtop/
-
-如果遇到不行的情况，需要重新安装httpd，先 yum remove httpd，然后 yum install httpd，放心历史版本的配置文件会自动重命名保留的。亲测刚开始启动无效，重装就OK了
-
-4、将 
-
-5、yum install httpd
-
----
-
-基础环境搭建
+## 基础环境搭建(systemctl+mysql)
 
 1、docker pull registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-offical-recommended-build-environment-in-centos-for-release-3.2.0
 
@@ -82,7 +66,7 @@
 
 ---
 
-ambari rpm 安装
+## ambari rpm 安装
 
 1、cd /opt && wget https://github.com/apache/ambari/archive/refs/tags/release-2.8.0-rc0.tar.gz
 
@@ -120,11 +104,27 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 13、yum install /opt/ambari-release-2.8.0-rc0/ambari-agent/target/rpm/ambari-agent/RPMS/x86_64/ambari-agent-2.8.0.0-0.x86_64.rpm
 
+## bigtop320 安装文件的引入
+
+1、docker pull registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-repo-ready-for-http
+
+2、sudo docker run -itd --name='bigtop320' --privileged   registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:bigtop-repo-ready-for-http /usr/sbin/init
+
+4、将 bigtop 镜像中编译后 bigtop 项目目录拷贝到 noah 容器的  /opt 目录下
+
+5、yum install httpd
+
+6、修改 /etc/httpd/conf/httpd.conf，修改 Listen 2929，修改 Alias /bigtop /opt/bigtop-release-3.2.0/output，修改 <Directory "/opt/bigtop-release-3.2.0/output">，修改 Options Indexes FollowSymLinks，增加 ServerSignature Off
+
+7、浏览器 http://127.0.0.1:2929/bigtop/
+
+8、service httpd start
+
 ---
 
-ambari web 页面安装
+## ambari web 页面安装
 
-第1步里面，base url 一定不能写死某个特定的ip，这里可以用127.0.0.1，并且勾选下面的 skip
+第1步里面，base url 一定不能写死某个特定的ip，这里可以用127.0.0.1
 
 第7步里面，需要选择 hive 元数据的存放位置。这里如果选择了 new mysql 那就走回了老路，默认安装的是 mysql 5.6 ，到后边安装其他组件的时候就傻眼了。所以坚决选择 Existing MySQL
 

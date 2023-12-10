@@ -64,6 +64,8 @@
 
 20、设置完成之后，最后重置密码 ALTER USER 'root'@'localhost' IDENTIFIED BY 'mysql';
 
+21、use mysql; update user set host ='%' where user='root'; FLUSH PRIVILEGES;
+
 ---
 
 ## ambari rpm 安装
@@ -161,5 +163,7 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 16、到 ALL CONFIGURATIONS 页面的时候，修改 hadoop.proxyuser.* 为 root；修改 yarn.scheduler.minimum-allocation-mb 为 1 MB
 
 ---
+
+ambari-installed-test-20231210
 
 上一般本 NOAH 镜像可以查看 docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118

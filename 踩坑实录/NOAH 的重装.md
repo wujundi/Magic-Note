@@ -76,9 +76,18 @@
 
 3、cd ambari-release-2.8.0-rc0
 
-4、修改 ambari-release-2.8.0-rc0/ambari-admin/pom.xml，修改 `<nodeVersion>`v10.24.1 `</nodeVersion>` 和 `<npmVersion>`6.14.12 `</npmVersion>`
+4、修改 ambari-release-2.8.0-rc0/ambari-admin/pom.xml
 
-5、修改 ambari-release-2.8.0-rc0/ambari-web/pom.xml，修改 `<nodeVersion>`v10.24.1 `</nodeVersion>`
+```
+修改  <nodeVersion>v10.24.1</nodeVersion>
+和    <npmVersion>6.14.12</npmVersion>
+```
+
+5、修改 ambari-release-2.8.0-rc0/ambari-web/pom.xml，
+
+```
+修改 <nodeVersion>v10.24.1</nodeVersion>
+```
 
 6、修改 ambari-release-2.8.0-rc0/ambari-server/pom.xml，将 ambari-serviceadvisor 的版本修改为 2.8.0.0.0
 
@@ -116,7 +125,15 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 5、yum install httpd
 
-6、修改 /etc/httpd/conf/httpd.conf，修改 Listen 2929，修改 Alias /bigtop /opt/NOAH_repositories/bigtop-release-3.2.0/output，修改 <Directory "/opt/NOAH_repositories/bigtop-release-3.2.0/output">，修改 Options Indexes FollowSymLinks，增加 ServerSignature Off
+6、修改 /etc/httpd/conf/httpd.conf
+
+```
+修改 Listen 2929
+修改 Alias /bigtop /opt/NOAH_repositories/bigtop-release-3.2.0/output，
+修改 <Directory "/opt/NOAH_repositories/bigtop-release-3.2.0/output">
+修改 Options Indexes FollowSymLinks
+增加 ServerSignature Off
+```
 
 7、浏览器 http://127.0.0.1:2929/bigtop/
 

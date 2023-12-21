@@ -181,7 +181,7 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 ---
 
-## anbari 安装之后，mysql、postgressql 连接/查看权限的调整
+## ambari 安装之后，mysql、postgressql 连接/查看权限的调整
 
 1、mysql -uroot -p
 
@@ -221,32 +221,55 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 ---
 
+## flink sql-client 的调整
 
+1、修改 /etc/profile，新增
 
-## hive 命令行和 flink sql-client 的调整
+```
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+export HADOOP_CLASSPATH=/usr/bigtop/3.2.0/usr/lib/hadoop/lib
+export HADOOP_HOME=/usr/bigtop/3.2.0/usr/lib/hadoop
+export HADOOP_HDFS_HOME=/usr/bigtop/3.2.0/usr/lib/hadoop-hdfs
+export HADOOP_MAPRED_HOME=/usr/bigtop/3.2.0/usr/lib/hadoop-mapreduce
+export HADOOP_YARN_HOME=/usr/bigtop/3.2.0/usr/lib/hadoop-yarn
+export HIVE_HOME=/usr/bigtop/3.2.0/usr/lib/hive
+# export HBASE_HOME=/usr/bigtop/current/hbase-client # what i found
+export HBASE_HOME=/usr/bigtop/3.2.0/usr/lib/hbase # what i thought it should be , comparing with the others
+export FLINK_HOME=/usr/bigtop/3.2.0/usr/lib/flink
+# export FLINK_CONF_DIR=${FLINK_HOME}/conf
+export FLINK_CONF_DIR=/etc/flink/conf
+export KE_HOME=/opt/kafka-eagle-bin-3.0.1/efak-web-3.0.1
 
+export PATH=$PATH:$HADOOP_CONF_DIR:$HADOOP_CLASSPATH:$HADOOP_HOME:$HADOOP_HDFS_HOME:$HADOOP_MAPRED_HOME:$HADOOP_YARN_HOME
+export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
+```
 
+2、source /etc/profile
 
+3、cd /usr/bigtop/3.2.0/usr/lib/flink && cp -r lib/ lib_bak/
 
+4、下载 flink 1.15.3 源码，并编译（实际安装时候拷贝了历史文件）
 
+5、mkdir /usr/bigtop/3.2.0/usr/lib/flink/opt
 
+6、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-client/target/flink-sql-client-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/opt
 
+7、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-python/target/flink-python_2.12-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib
 
+5、cd /usr/bigtop/3.2.0/usr/lib/flink/bin && bash start-cluster.sh
 
+6、cd /usr/bigtop/3.2.0/usr/lib/flink/bin && bash sql-client.sh 
 
+7、exit;
 
-
-
-
-
-
-
-
-
+## spiderflow 的安装
 
 
 ---
 
 
+
+
+---
 
 上一版本 NOAH 镜像可以查看 docker run -itd --name='bak' registry.cn-hangzhou.aliyuncs.com/wujundi/centos-noah:stream-warehouse-dev-20231118

@@ -257,6 +257,27 @@ export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
 
 ## spiderflow 的安装
 
+1、mkdir /opt/NOAH_spiderflow
+
+2、把原来的文件夹拷贝过来
+
+3、mysql -uroot -p < /opt/opt_bak/data_dump/spiderflow.sql（把原来的数据dump导入，这样就不需要重复配置任务了。）
+
+4、在 /opt/start_up.sh 里面添加
+
+```
+java -jar /opt/NOAH_spiderflow/spider-flow-0.5.0/spider-flow-web/target/spider-flow.jar &
+```
+
+## doris 的安装
+
+1、mkdir /opt/NOAH_doris
+
+2、把原来的文件夹拷贝过来
+
+3、在 /opt/start_up.sh 里面添加
+
+
 ---
 
 ---

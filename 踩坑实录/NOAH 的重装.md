@@ -161,23 +161,21 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 7、mysql -uroot -p
 
-8、SHOW VARIABLES LIKE 'validate_password%';
+```
+SHOW VARIABLES LIKE 'validate_password%';
+set global validate_password_policy=LOW;
+set global validate_password_length=4;
+SHOW VARIABLES LIKE 'validate_password%';
+CREATE USER 'hive'@'localhost' IDENTIFIED BY 'hive';
+GRANT ALL PRIVILEGES ON * . * TO 'hive'@'localhost';
+create database hive;
+```
 
-9、set global validate_password_policy=LOW;
 
-10、set global validate_password_length=4;
 
-11、SHOW VARIABLES LIKE 'validate_password%';
+8、页面上继续操作，修改 Database URL 为 jdbc:mysql://localhost:3306/hive
 
-12、CREATE USER 'hive'@'localhost' IDENTIFIED BY 'hive';
-
-13、GRANT ALL PRIVILEGES ON * . * TO 'hive'@'localhost';
-
-14、create database hive;
-
-15、页面上继续操作，修改 Database URL 为 jdbc:mysql://localhost:3306/hive
-
-16、到 ALL CONFIGURATIONS 页面的时候，修改 hadoop.proxyuser.* 为 root；修改 yarn.scheduler.minimum-allocation-mb 为 1 MB
+9、到 ALL CONFIGURATIONS 页面的时候，修改 hadoop.proxyuser.* 为 root；修改 yarn.scheduler.minimum-allocation-mb 为 1 MB
 
 ---
 
@@ -185,37 +183,32 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 1、mysql -uroot -p
 
-2、use mysql;
+```
+use mysql;
+select host, user from user;
+SHOW VARIABLES LIKE 'validate_password%';
+set global validate_password_policy=LOW;
+set global validate_password_length=4;
+SHOW VARIABLES LIKE 'validate_password%';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'mysql' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+exit;
 
-3、select host, user from user;
+```
 
-4、SHOW VARIABLES LIKE 'validate_password%';
+2、serviceambari-serverstart
 
-5、set global validate_password_policy=LOW;
+3、su - postgres
 
-6、set global validate_password_length=4;
+4、psql
 
-7、SHOW VARIABLES LIKE 'validate_password%';
+```
+\c ambari
+grant postgres to ambari;
+grant all privileges on database ambari to ambari;
+\q
 
-8、GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'mysql' WITH GRANT OPTION;
-
-9、FLUSH PRIVILEGES;
-
-10、exit;
-
-11、serviceambari-serverstart
-
-12、su - postgres
-
-13、psql
-
-14、\c ambari
-
-15、grant postgres to ambari;
-
-16、grant all privileges on database ambari to ambari;
-
-17、\q
+```
 
 (后续可以使用默认账户ambari，默认密码bigdata连接 postgresql，来查看ambari元数据)
 
@@ -258,17 +251,13 @@ export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
 
 5、cd /usr/bigtop/3.2.0/usr/lib/flink/bin && bash start-cluster.sh
 
-6、cd /usr/bigtop/3.2.0/usr/lib/flink/bin && bash sql-client.sh 
+6、cd /usr/bigtop/3.2.0/usr/lib/flink/bin && bash sql-client.sh
 
 7、exit;
 
 ## spiderflow 的安装
 
-
 ---
-
-
-
 
 ---
 

@@ -277,6 +277,13 @@ java -jar /opt/NOAH_spiderflow/spider-flow-0.5.0/spider-flow-web/target/spider-f
 
 3、在 /opt/start_up.sh 里面添加
 
+```
+swapoff -a
+/opt/NOAH_doris/doris-1.2.4.1/output/fe/bin/start_fe.sh --daemon
+sysctl -w vm.max_map_count=2000000
+/opt/NOAH_doris/doris-1.2.4.1/output/be/bin/start_be.sh --daemon
+```
+
 
 ---
 

@@ -305,6 +305,18 @@ sysctl -w vm.max_map_count=2000000
 
 4、用户名 admin，密码是 123456
 
+## streampark 的安装
+
+1、mkdir /opt/NOAH_stream_park
+
+2、把原来的文件夹拷贝过来
+
+3、service mysqld start
+
+4、mysql -uroot -p < /opt/opt_bak/data_dump/streampark.sql（把原来的数据dump导入，这样就不需要重复配置任务了。）
+
+5、用户名 admin，密码是 streampark
+
 ---
 
 ---

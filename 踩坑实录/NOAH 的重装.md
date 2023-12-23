@@ -143,6 +143,8 @@ lrwxrwxrwx. 1 root root 73 7月  23 14:43 /etc/alternatives/java -> /usr/lib/jvm
 
 ## ambari web 页面安装
 
+用户名 admin，密码 admin
+
 第1步里面，base url 一定不能写死某个特定的ip，这里可以用127.0.0.1
 
 第7步里面，需要选择 hive 元数据的存放位置。这里如果选择了 new mysql 那就走回了老路，默认安装的是 mysql 5.6 ，到后边安装其他组件的时候就傻眼了。所以坚决选择 Existing MySQL
@@ -170,8 +172,6 @@ CREATE USER 'hive'@'localhost' IDENTIFIED BY 'hive';
 GRANT ALL PRIVILEGES ON * . * TO 'hive'@'localhost';
 create database hive;
 ```
-
-
 
 8、页面上继续操作，修改 Database URL 为 jdbc:mysql://localhost:3306/hive
 
@@ -231,7 +231,7 @@ export HBASE_HOME=/usr/bigtop/3.2.0/usr/lib/hbase # what i thought it should be 
 export FLINK_HOME=/usr/bigtop/3.2.0/usr/lib/flink
 # export FLINK_CONF_DIR=${FLINK_HOME}/conf
 export FLINK_CONF_DIR=/etc/flink/conf
-export KE_HOME=/opt/kafka-eagle-bin-3.0.1/efak-web-3.0.1
+export KE_HOME=/opt/NOAH_kafka_eagle/kafka-eagle-bin-3.0.1/efak-web-3.0.1
 
 export PATH=$PATH:$HADOOP_CONF_DIR:$HADOOP_CLASSPATH:$HADOOP_HOME:$HADOOP_HDFS_HOME:$HADOOP_MAPRED_HOME:$HADOOP_YARN_HOME
 export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
@@ -257,7 +257,7 @@ export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
 
 ## spiderflow 的安装
 
-1、mkdir /opt/NOAH_spiderflow
+1、mkdir /opt/NOAH_spider_flow
 
 2、把原来的文件夹拷贝过来
 
@@ -266,8 +266,10 @@ export PATH=$PATH:$HIVE_HOME:$HBASE_HOME:$FLINK_HOME:$FLINK_CONF_DIR:$KE_HOME
 4、在 /opt/start_up.sh 里面添加
 
 ```
-java -jar /opt/NOAH_spiderflow/spider-flow-0.5.0/spider-flow-web/target/spider-flow.jar &
+java -jar /opt/NOAH_spider_flow/spider-flow-0.5.0/spider-flow-web/target/spider-flow.jar
 ```
+
+---
 
 ## doris 的安装
 
@@ -284,6 +286,24 @@ sysctl -w vm.max_map_count=2000000
 /opt/NOAH_doris/doris-1.2.4.1/output/be/bin/start_be.sh --daemon
 ```
 
+4、用户 root 密码为空
+
+---
+
+## EFAF 的安装
+
+1、mkdir /opt/NOAH_kafka_eagle
+
+2、把原来的文件夹拷贝过来，注意并不需要额外导入数据，因为HDFS也是新的，是空的，kafka还没有数据
+
+3、 在 /opt/start_up.sh 里面添加
+
+```
+/opt/NOAH_kafka_eagle/kafka-eagle-bin-3.0.1/efak-web-3.0.1/bin/ke.sh start
+
+```
+
+4、用户名 admin，密码是 123456
 
 ---
 

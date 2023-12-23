@@ -149,8 +149,7 @@ org.apache.flink.table.planner.loader.DelegateExecutorFactory
 * 加上 content 字段之后报错 Causedby: org.apache.doris.flink.exception.DorisRuntimeException: stream load error: [INTERNAL_ERROR]too many filtered rows, see more in http://172.17.0.2:18040/api/_load_error_log?file=__shard_0/error_log_insert_stmt_714ccabc617d3b09-9898b25fab573697_714ccabc617d3b09_9898b25fab573697，这里的 172.17.0.2 是容器的ip，得换成 127.0.0.1 然后访问，页面中的报错是 Reason: column_name[content], the length of input is too long than schema. first 32 bytes of input str: [{"results":[{"nat":"ES","gender"] schema length: 1024; actual length: 1161; . src line [];，搜索了一下，[Apache Doris FAQs-Apache Doris 文档-面试哥 (mianshigee.com)](https://www.mianshigee.com/tutorial/Doris/faq.md)，再看看之前的 doris 见表语句，确实是 content VARCHAR(1024) COMMENT "抓取信息" 了，这回改成 10240 试一下，问题解决。
 * 然后去 doris 里面看到数据有了，开心，自此 flink cdc 就算走通了。包含了整数、长字符串、时间类型三个字段。
 
-
-noah重装
+## noah重装
 
 ---
 
@@ -160,14 +159,12 @@ noah重装
 
 准备新建一个 flink_cdc_to_doris_test 任务，结果在 Verify 环节报错，无法提交
 
-在 /opt/NOAH_streampark/apache-streampark_2.12-2.1.1-incubating-bin/logs/info.2023-12-19.log 里面查看日志，是一个空指针错误。
+在 /opt/NOAH_stream_park/apache-streampark_2.12-2.1.1-incubating-bin/logs/error.2023-12-23.log 这里的信息多一些，除了反射的这些最终给到了 2023-12-2322:23:01.896 StreamPark [XNIO-1 task-4] ERRORo.a.s.c.c.s.impl.FlinkSqlServiceImpl:205 - verifySql invocationTargetException: java.lang.reflect.InvocationTargetException
 
-java.lang.NullPointerException: null
-
-    at org.apache.streampark.console.core.controller.FlinkSqlController.verify(FlinkSqlController.java:64)
-
-找到是这个类 /opt/NOAH_source_reference/apache-streampark-2.1.1-incubating-src/streampark-console/streampark-console-service/src/main/java/org/apache/streampark/console/core/controller/FlinkSqlController.java
-
-这基本是啥也看不出来呀，/opt/NOAH_streampark/apache-streampark_2.12-2.1.1-incubating-bin/logs/error.2023-12-19.log 这里的信息多一些，除了反射的这些最终给到了 Caused by: java.lang.NoClassDefFoundError: org/apache/calcite/sql/validate/SqlConformance 
+Caused by: java.lang.NoClassDefFoundError: org/apache/calcite/sql/validate/SqlConformance
 
 Caused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.SqlConformance
+
+根据 StreamPark中记载的之前遇到的情况，我把 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-table-planner/target/flink-table-planner_2.12-1.15.3.jar 复制到 flink lib 目录中，还是没有解决问题
+
+我又在 flink 源码包里面搜索 org.apache.calcite.sql.validate.SqlConformance，发现在 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-parser/src/main/java/org/apache/flink/sql/parser/validate/FlinkSqlConformance.java 这个里面有引入，于是我把对应的 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-parser/target/flink-sql-parser-1.15.3.jar 也拷贝到 flink lib 里面试一下。

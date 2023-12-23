@@ -317,6 +317,20 @@ sysctl -w vm.max_map_count=2000000
 
 5、用户名 admin，密码是 streampark
 
+## flink cdc to doris调试
+
+1、su hdfs
+
+2、hadoop fs -mkdir -p /streampark/flink/flink/plugins
+
+3、cp /opt/NOAH_source_reference/flink-cdc-connectors-release-2.4.0/flink-sql-connector-mysql-cdc/target/flink-sql-connector-mysql-cdc-2.4.0.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+4、cp /opt/NOAH_source_reference/doris-flink-connector-1.4.0/flink-doris-connector/target/flink-doris-connector-1.15-1.4.0-SNAPSHOT.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+5、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-parser/target/flink-sql-parser-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+6、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-table-planner/target/flink-table-planner_2.12-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
 ---
 
 ---

@@ -343,6 +343,33 @@ binlog_format=ROW
 
 9、service mysqld restart
 
+## flink to kafka 调试
+
+1、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors/flink-sql-connector-kafka/target/flink-sql-connector-kafka-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+2、su hdfs 
+
+3、hadoop fs -put /usr/bigtop/3.2.0/usr/lib/flink/lib/flink-sql-connector-kafka-1.15.3.jar /streampark/flink/flink/lib/
+
+4、efak 里面创建topic test_topic_1
+
+5、在 streampark 页面启动 flink_cdc_to_kafka_test 任务
+
+## kafka to doris 调试
+
+1、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors/flink-sql-connector-hive-3.1.2/target/flink-sql-connector-hive-3.1.2_2.12-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+2、cp /usr/bigtop/3.2.0/usr/lib/hadoop/client/hadoop-mapreduce-client-core-3.3.4.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+2、su hdfs
+
+3、hadoop fs -put /usr/bigtop/3.2.0/usr/lib/flink/lib/flink-sql-connector-hive-3.1.2_2.12-1.15.3.jar /streampark/flink/flink/lib/
+
+4、hadoop fs -put /usr/bigtop/3.2.0/usr/lib/flink/lib/hadoop-mapreduce-client-core-3.3.4.jar /streampark/flink/flink/lib/
+
+5、在 streampark 页面启动 kafka_to_doris_test任务
+
+
 ---
 
 ---

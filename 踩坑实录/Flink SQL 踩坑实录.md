@@ -142,3 +142,15 @@ Caused by: org.apache.flink.kafka.shaded.org.apache.kafka.common.errors.TimeoutE
 然后，任务倒是启动了，但是 doris 里面迟迟没有数据呀，而且 EFAK 也显示不出现有 topic 了，看起来 PLAINTEXT://127.0.0.1:9092 的影响还挺大，然后我换成了 PLAINTEXT://noah:9092，EFAK显示正常，Topic test_topic_1 的页面能看到数据抽样，说明写入 kafka 生效了。
 
 doris 里面也有了，看起来数据的更新周期和check的时间间隔有关，现在设置的是 SET'execution.checkpointing.interval'='5s';
+
+## NOAH 重装过程中遇到的报错
+
+Caused by: java.lang.ClassNotFoundException: org.apache.kafka.common.serialization.ByteArraySerializer
+
+是kafka的jar包加错了，应该用 flink-sql-connector-kafka-1.15.3.jar 而不是 flink-connector-kafka-1.15.3.jar
+
+---
+
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.mapred.OutputFormat
+
+我搜索了一下 hadoop 的源码，也是在 mapreduce-client-core 这里，问题本质和上面说的缺少 hadoop-mapreduce-client-core-3.3.4.jar 是一个事情，解决办法也相同

@@ -171,7 +171,7 @@ Caused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.Sql
 
 ---
 
-正常开启任务之后新的报错 
+正常开启任务之后新的报错
 
 org.apache.flink.util.FlinkException: Global failure triggered byOperatorCoordinatorfor'Source: cdc_mysql_source[1] -> DropUpdateBefore[2] -> doris_sink[3]: Writer -> doris_sink[3]: Committer' (operator cbc357ccb763df2852fee8c4fc7d55f2).
 
@@ -181,6 +181,6 @@ Causedby: org.apache.flink.table.api.ValidationException: TheMySQL server has a 
 
 ---
 
-新报错 
+新报错
 
 org.apache.flink.util.FlinkRuntimeException: Cannot read the binlog filename and position via '`SHOW MASTER STATUS`'. Make sure your server is correctly configured.

@@ -165,6 +165,22 @@ Caused by: java.lang.NoClassDefFoundError: org/apache/calcite/sql/validate/SqlCo
 
 Caused by: java.lang.ClassNotFoundException: org.apache.calcite.sql.validate.SqlConformance
 
-根据 StreamPark中记载的之前遇到的情况，我把 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-table-planner/target/flink-table-planner_2.12-1.15.3.jar 复制到 flink lib 目录中，还是没有解决问题
+根据 StreamPark中记载的之前遇到的情况，我把 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-table-planner/target/flink-table-planner_2.12-1.15.3.jar 复制到 flink lib 目录中，还是没有解决。
 
-我又在 flink 源码包里面搜索 org.apache.calcite.sql.validate.SqlConformance，发现在 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-parser/src/main/java/org/apache/flink/sql/parser/validate/FlinkSqlConformance.java 这个里面有引入，于是我把对应的 /opt/NOAH_source_reference/flink-1.15.3_md/flink-table/flink-sql-parser/target/flink-sql-parser-1.15.3.jar 也拷贝到 flink lib 里面试一下。
+后来发现需要拷贝进去之后，需要重新启动 streampark 进程才可以。
+
+---
+
+正常开启任务之后新的报错 
+
+org.apache.flink.util.FlinkException: Global failure triggered byOperatorCoordinatorfor'Source: cdc_mysql_source[1] -> DropUpdateBefore[2] -> doris_sink[3]: Writer -> doris_sink[3]: Committer' (operator cbc357ccb763df2852fee8c4fc7d55f2).
+
+Causedby: org.apache.flink.table.api.ValidationException: TheMySQL server has a timezone offset (28800 seconds ahead ofUTC) which does not match the configured timezone UTC. Specify the right server-time-zone to avoid inconsistencies for time-related fields.
+
+参考 [Caused by: org.apache.flink.table.api.ValidationException: The MySQL server has a timezone offset-CSDN博客](https://blog.csdn.net/zhglhy/article/details/133931964) ，在 source 表里面添加 'server-time-zone' = 'Asia/Shanghai', 重新启动，得=得以解决。
+
+---
+
+新报错 
+
+org.apache.flink.util.FlinkRuntimeException: Cannot read the binlog filename and position via '`SHOW MASTER STATUS`'. Make sure your server is correctly configured.

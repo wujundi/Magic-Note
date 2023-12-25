@@ -347,7 +347,7 @@ binlog_format=ROW
 
 1、cp /opt/NOAH_source_reference/flink-1.15.3_md/flink-connectors/flink-sql-connector-kafka/target/flink-sql-connector-kafka-1.15.3.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
 
-2、su hdfs 
+2、su hdfs
 
 3、hadoop fs -put /usr/bigtop/3.2.0/usr/lib/flink/lib/flink-sql-connector-kafka-1.15.3.jar /streampark/flink/flink/lib/
 
@@ -369,6 +369,25 @@ binlog_format=ROW
 
 5、在 streampark 页面启动 kafka_to_doris_test任务
 
+
+
+## kafka to Paimon 调试
+
+1、cd /opt/NOAH_files/
+
+2、wget https://repo.maven.apache.org/maven2/org/apache/paimon/paimon-flink-1.15/0.6.0-incubating/paimon-flink-1.15-0.6.0-incubating.jar
+
+3、cp /opt/NOAH_files/paimon-flink-1.15-0.6.0-incubating.jar /usr/bigtop/3.2.0/usr/lib/flink/lib/
+
+4、su hdfs
+
+5、hadoop fs -put /usr/bigtop/3.2.0/usr/lib/flink/lib/paimon-flink-1.15-0.6.0-incubating.jar /streampark/flink/flink/lib/
+
+6、在 streampark 页面启动 kafka_to_paimon_test 任务
+
+## Paimon to doris 调试
+
+7、在 streampark 页面启动 paimon_to_doris_test 任务
 
 ---
 

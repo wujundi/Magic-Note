@@ -253,7 +253,7 @@ select id
 
 难道还要回回都显示的创建 catalog 么？
 
-CREATECATALOG paimon_catalog WITH (
+CREATE CATALOG paimon_catalog WITH (
 
     'type'='paimon'
 
